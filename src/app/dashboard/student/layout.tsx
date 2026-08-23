@@ -9,7 +9,7 @@ export default async function StudentDashboardLayout({
   const user = await requireStudent();
 
   return (
-    <div className="min-h-screen bg-background lg:flex">
+    <div className="min-h-screen bg-background lg:flex [font-family:var(--font-geist-sans),sans-serif]">
       <StudentSidebar userName={user.name} />
 
       <div className="flex min-w-0 flex-1 flex-col">

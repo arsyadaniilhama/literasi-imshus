@@ -175,6 +175,7 @@
 @layer components {
   .article-content {
     @apply text-[1.0625rem] leading-[1.75] text-foreground;
+    font-family: var(--font-geist-sans), var(--font-geist-mono), sans-serif;
   }
 
   .article-content > * {

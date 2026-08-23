@@ -9,7 +9,7 @@ export default async function TeacherDashboardLayout({
   const user = await requireTeacher();
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex [font-family:var(--font-geist-sans),sans-serif]">
       <TeacherSidebar userName={user.name} userRole="Guru" />
       <main className="flex-1 lg:ml-64 min-w-0">
         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-primary/10">

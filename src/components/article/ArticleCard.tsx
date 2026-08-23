@@ -26,7 +26,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
   return (
     <Card
       size="sm"
-      className="group flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      className="group flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg [font-family:var(--font-geist-sans),sans-serif]"
     >
       {article.cover_image_url ? (
         <div className="relative aspect-[16/9] overflow-hidden">
