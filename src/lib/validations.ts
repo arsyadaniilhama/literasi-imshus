@@ -93,6 +93,19 @@ export const createCategorySchema = z.object({
 
 export const updateCategorySchema = createCategorySchema.partial();
 
+export const createUserSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Nama minimal 2 karakter")
+    .max(100, "Nama maksimal 100 karakter"),
+  email: z.string().email("Email tidak valid"),
+  password: z
+    .string()
+    .min(6, "Password minimal 6 karakter")
+    .max(100, "Password maksimal 100 karakter"),
+  role: z.enum(["STUDENT", "TEACHER", "ADMIN"]),
+});
+
 export const fileUploadSchema = z.object({
   size: z.number().max(MAX_FILE_SIZE, "File maksimal 5 MB"),
   type: z.string().refine((t) => ALLOWED_IMAGE_MIME.includes(t), {

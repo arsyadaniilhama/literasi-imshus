@@ -3,29 +3,66 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
+import { createUserSchema } from "@/lib/validations";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { ActionResult } from "@/types";
 import type { Role } from "@/types";
 
 const ALLOWED_ROLES = ["STUDENT", "TEACHER", "ADMIN"];
 
 /**
- * Admin: buat user baru.
+ * Admin: buat user baru — akun Supabase Auth + record di tabel users.
  */
 export async function createUser(formData: FormData): Promise<ActionResult> {
   const admin = await requireAdmin();
-  const name = String(formData.get("name") || "").trim();
-  const email = String(formData.get("email") || "").trim().toLowerCase();
-  const role = String(formData.get("role") || "STUDENT") as Role;
+  const raw = Object.fromEntries(formData);
+  const parsed = createUserSchema.safeParse({
+    name: raw.name,
+    email: raw.email,
+    password: raw.password,
+    role: raw.role || "STUDENT",
+  });
 
-  if (!name || !email) return { success: false, error: "Nama dan email harus diisi." };
-  if (!ALLOWED_ROLES.includes(role)) return { success: false, error: "Role tidak valid." };
+  if (!parsed.success) {
+    return {
+      success: false,
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const { name, email, password, role } = parsed.data;
 
   try {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return { success: false, error: "Email sudah terdaftar." };
 
+    // 1. Buat akun di Supabase Auth
+    const { data: authData, error: authError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { name },
+      });
+
+    if (authError) {
+      console.error("createUser supabase error:", authError.message);
+      return { success: false, error: "Gagal membuat akun: " + authError.message };
+    }
+
+    const authUserId = authData.user?.id;
+    if (!authUserId) {
+      return { success: false, error: "Gagal membuat akun." };
+    }
+
+    // 2. Buat record di tabel users (id tersinkron dengan Supabase Auth)
     const created = await prisma.user.create({
-      data: { name, email, role },
+      data: {
+        id: authUserId,
+        name,
+        email: email.toLowerCase(),
+        role: role as Role,
+      },
     });
 
     await prisma.auditLog.create({

@@ -40,6 +40,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { createUser, updateUserRole, deleteUser } from "@/actions/users";
+import type { ActionResult } from "@/types";
 import { ROLE_LABELS, type Role } from "@/lib/constants";
 import { PlusIcon, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -87,6 +88,7 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
     const formData = new FormData(e.currentTarget);
     const name = String(formData.get("name") || "").trim();
     const email = String(formData.get("email") || "").trim();
+    const password = String(formData.get("password") || "");
 
     if (!name || name.length < 2) {
       toast.error("Nama minimal 2 karakter");
@@ -98,13 +100,21 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
       setIsSubmitting(false);
       return;
     }
+    if (!password || password.length < 6) {
+      toast.error("Password minimal 6 karakter");
+      setIsSubmitting(false);
+      return;
+    }
 
-    const result = await createUser(formData);
+    const result: ActionResult = await createUser(formData);
 
     if (result.success) {
       toast.success("User berhasil dibuat");
       setIsCreateOpen(false);
       window.location.reload();
+    } else if (result.errors) {
+      const firstFieldError = Object.values(result.errors).flat()[0];
+      toast.error(firstFieldError ?? "Gagal membuat user");
     } else {
       toast.error(result.error ?? "Gagal membuat user");
     }
@@ -181,6 +191,18 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
                   type="email"
                   placeholder="email@domain.com"
                   required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Minimal 6 karakter"
+                  minLength={6}
+                  required
+                  autoComplete="new-password"
                 />
               </div>
               <div className="space-y-2">
