@@ -22,7 +22,12 @@ export default function RegisterPage() {
   const [state, action, pending] = useActionState(register, null);
 
   return (
-    <Card className="w-full max-w-md backdrop-blur-sm bg-card/80 shadow-xl border-primary/10">
+    <Card className="relative w-full max-w-md backdrop-blur-sm bg-card/80 ring-primary/10 shadow-2xl shadow-primary/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)]">
+        {/* Garis aksen emas */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-gold to-primary"
+        />
         <CardHeader className="text-center">
           <Link href="/" className="mx-auto inline-block mb-2">
             <Image
@@ -85,7 +90,14 @@ export default function RegisterPage() {
                 {state.error}
               </p>
             )}
-            <Button type="submit" className="w-full" disabled={pending}>
+            <Button
+              type="submit"
+              className="relative w-full overflow-hidden bg-gradient-to-r from-primary to-gold shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-px hover:shadow-xl hover:shadow-gold/30"
+              disabled={pending}
+            >
+              <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+                <span className="absolute inset-y-0 left-0 w-1/3 animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 transition-opacity duration-300 group-hover/button:opacity-100" />
+              </span>
               {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Daftar
             </Button>

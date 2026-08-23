@@ -31,7 +31,7 @@ export function PublicHeader() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2.5"
+          className="group flex items-center gap-2.5"
           aria-label={`${SCHOOL_NAME} - Beranda`}
         >
           <Image
@@ -39,7 +39,7 @@ export function PublicHeader() {
             alt=""
             width={36}
             height={36}
-            className="h-9 w-9 rounded-lg object-contain shadow-sm"
+            className="h-9 w-9 rounded-lg object-contain shadow-sm transition-transform duration-300 ease-out group-hover:scale-110"
             aria-hidden="true"
           />
           <span className="font-heading text-lg font-semibold tracking-tight text-primary">
@@ -49,24 +49,37 @@ export function PublicHeader() {
 
         {/* Nav desktop */}
         <nav className="hidden items-center gap-1 sm:flex" aria-label="Navigasi utama">
-          {navLinks.map((link) => (
+          {navLinks.map((link, i) => (
             <Link
               key={link.href}
               href={link.href}
+              style={{ animationDelay: `${i * 60}ms` }}
               className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "group relative animate-slide-up-fade px-3 py-2 text-sm font-medium transition-colors",
                 pathname === link.href
                   ? "text-primary"
-                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                  : "text-muted-foreground hover:text-primary"
               )}
             >
               {link.label}
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute inset-x-3 bottom-0.5 h-0.5 origin-left rounded-full bg-gold transition-transform duration-300 ease-out",
+                  pathname === link.href
+                    ? "scale-x-100"
+                    : "scale-x-0 group-hover:scale-x-100"
+                )}
+              />
             </Link>
           ))}
-          <Button asChild variant="outline" size="sm" className="ml-2">
+          <Button asChild size="sm" className="relative ml-2 overflow-hidden bg-gradient-to-r from-primary to-gold shadow-md shadow-primary/20 transition-all duration-300 hover:-translate-y-px hover:shadow-lg hover:shadow-gold/25">
             <Link href="/login">
               <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
               Masuk
+              <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+                <span className="absolute inset-y-0 left-0 w-1/3 animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 transition-opacity duration-300 group-hover/button:opacity-100" />
+              </span>
             </Link>
           </Button>
         </nav>
@@ -95,19 +108,31 @@ export function PublicHeader() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "group relative rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   pathname === link.href
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-primary"
                 )}
               >
                 {link.label}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute inset-x-3 bottom-1.5 h-0.5 origin-left rounded-full bg-gold transition-transform duration-300 ease-out",
+                    pathname === link.href
+                      ? "scale-x-100"
+                      : "scale-x-0 group-hover:scale-x-100"
+                  )}
+                />
               </Link>
             ))}
-            <Button asChild className="mt-2 w-full">
+            <Button asChild className="relative mt-2 w-full overflow-hidden bg-gradient-to-r from-primary to-gold shadow-md shadow-primary/20 transition-all duration-300 hover:-translate-y-px hover:shadow-lg hover:shadow-gold/25">
               <Link href="/login">
                 <LogIn className="h-4 w-4" aria-hidden="true" />
                 Masuk
+                <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+                  <span className="absolute inset-y-0 left-0 w-1/3 animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 transition-opacity duration-300 group-hover/button:opacity-100" />
+                </span>
               </Link>
             </Button>
           </div>
