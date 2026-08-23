@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,9 +24,16 @@ export default function RegisterPage() {
   return (
     <Card className="w-full max-w-md backdrop-blur-sm bg-card/80 shadow-xl border-primary/10">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <span className="text-2xl font-bold text-primary">B</span>
-          </div>
+          <Link href="/" className="mx-auto inline-block mb-2">
+            <Image
+              src="/imshus-logo.png"
+              alt={`${SCHOOL_NAME} - Beranda`}
+              width={48}
+              height={48}
+              className="h-12 w-12 rounded-lg shadow-sm"
+              priority
+            />
+          </Link>
           <CardTitle className="text-2xl font-heading">Daftar</CardTitle>
           <CardDescription>
             {SCHOOL_NAME} — Blog Santri
