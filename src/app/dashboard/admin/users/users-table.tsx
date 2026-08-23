@@ -1,0 +1,359 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { createUser, updateUserRole, deleteUser } from "@/actions/users";
+import { ROLE_LABELS, type Role } from "@/lib/constants";
+import { PlusIcon, Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  avatar_url: string | null;
+  created_at: string;
+}
+
+interface UsersTableProps {
+  users: User[];
+}
+
+export function UsersTable({ users: initialUsers }: UsersTableProps) {
+  const [users, setUsers] = useState(initialUsers);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const ROLES: { value: Role; label: string }[] = [
+    { value: "ADMIN", label: "Admin" },
+    { value: "TEACHER", label: "Guru" },
+    { value: "STUDENT", label: "Santri" },
+  ];
+
+  const getRoleBadgeVariant = (role: Role) => {
+    switch (role) {
+      case "ADMIN":
+        return "destructive";
+      case "TEACHER":
+        return "default";
+      case "STUDENT":
+        return "secondary";
+    }
+  };
+
+  const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const name = String(formData.get("name") || "").trim();
+    const email = String(formData.get("email") || "").trim();
+
+    if (!name || name.length < 2) {
+      toast.error("Nama minimal 2 karakter");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!email || !email.includes("@")) {
+      toast.error("Email tidak valid");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const result = await createUser(formData);
+
+    if (result.success) {
+      toast.success("User berhasil dibuat");
+      setIsCreateOpen(false);
+      window.location.reload();
+    } else {
+      toast.error(result.error ?? "Gagal membuat user");
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleRoleChange = async (userId: string, newRole: Role) => {
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append("user_id", userId);
+    formData.append("role", newRole);
+
+    const result = await updateUserRole(formData);
+
+    if (result.success) {
+      toast.success("Role berhasil diubah");
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      );
+    } else {
+      toast.error(result.error ?? "Gagal mengubah role");
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleDelete = async (userId: string) => {
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append("user_id", userId);
+
+    const result = await deleteUser(formData);
+
+    if (result.success) {
+      toast.success("User berhasil dihapus");
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    } else {
+      toast.error(result.error ?? "Gagal menghapus user");
+    }
+    setDeleteDialogOpen(null);
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header with add button */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusIcon className="mr-2 size-4" />
+              Tambah User
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Tambah User Baru</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama Lengkap</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="Nama lengkap"
+                  required
+                  minLength={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="email@domain.com"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select name="role" defaultValue="STUDENT">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Menyimpan...
+                    </>
+                  ) : (
+                    "Simpan"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="w-full sm:w-auto"
+                >
+                  Batal
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Users Table */}
+      <div className="rounded-xl border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[40px]">#</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead className="hidden md:table-cell">Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead className="w-[160px] text-right">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  Belum ada user
+                </TableCell>
+              </TableRow>
+            ) : (
+              users.map((user, index) => (
+                <TableRow key={user.id}>
+                  <TableCell className="text-muted-foreground">
+                    {index + 1}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                        {user.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={user.avatar_url}
+                            alt={user.name}
+                            className="size-full rounded-full object-cover"
+                          />
+                        ) : (
+                          user.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(user.created_at).toLocaleDateString("id-ID")}
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {user.email}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                      {ROLE_LABELS[user.role]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      {/* Role dropdown */}
+                      <Select
+                        value={user.role}
+                        onValueChange={(value) =>
+                          handleRoleChange(user.id, value as Role)
+                        }
+                        disabled={isSubmitting}
+                      >
+                        <SelectTrigger className="w-[110px] size-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>
+                              {r.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Delete button */}
+                      <AlertDialog
+                        open={deleteDialogOpen === user.id}
+                        onOpenChange={(open) => {
+                          if (!open) setDeleteDialogOpen(null);
+                        }}
+                      >
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            disabled={isSubmitting}
+                            onClick={() => setDeleteDialogOpen(user.id)}
+                          >
+                            <Trash2 className="size-4" />
+                            <span className="sr-only">Hapus</span>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Hapus User?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tindakan ini tidak dapat dibatalkan. User{" "}
+                              <strong>{user.name}</strong> akan dihapus permanen
+                              beserta data terkait.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Batal</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(user.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/80"
+                            >
+                              Hapus
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}

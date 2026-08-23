@@ -1,0 +1,154 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth/session";
+import type { ActionResult } from "@/types";
+import type { Role } from "@/types";
+
+const ALLOWED_ROLES = ["STUDENT", "TEACHER", "ADMIN"];
+
+/**
+ * Admin: buat user baru.
+ */
+export async function createUser(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const name = String(formData.get("name") || "").trim();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const role = String(formData.get("role") || "STUDENT") as Role;
+
+  if (!name || !email) return { success: false, error: "Nama dan email harus diisi." };
+  if (!ALLOWED_ROLES.includes(role)) return { success: false, error: "Role tidak valid." };
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return { success: false, error: "Email sudah terdaftar." };
+
+    const created = await prisma.user.create({
+      data: { name, email, role },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        user_id: admin.id,
+        action: "ADMIN_CREATED_USER",
+        entity_type: "user",
+        entity_id: created.id,
+      },
+    });
+
+    revalidatePath("/dashboard/admin/users");
+    return { success: true };
+  } catch (error) {
+    console.error("createUser error:", error);
+    return { success: false, error: "Terjadi kesalahan saat membuat user." };
+  }
+}
+
+/**
+ * Admin: ubah role user.
+ */
+export async function updateUserRole(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const userId = String(formData.get("user_id"));
+  const role = String(formData.get("role")) as Role;
+
+  if (!ALLOWED_ROLES.includes(role)) return { success: false, error: "Role tidak valid." };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return { success: false, error: "User tidak ditemukan." };
+    if (user.role === "ADMIN" && role !== "ADMIN") {
+      // Jangan biarkan admin terakhir menurunkan role dirinya sendiri
+      const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+      if (adminCount <= 1 && user.id === admin.id) {
+        return { success: false, error: "Tidak dapat menurunkan role admin terakhir." };
+      }
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: role as "ADMIN" | "TEACHER" | "STUDENT" },
+    });
+
+    revalidatePath("/dashboard/admin/users");
+    return { success: true };
+  } catch (error) {
+    console.error("updateUserRole error:", error);
+    return { success: false, error: "Terjadi kesalahan saat mengubah role." };
+  }
+}
+
+/**
+ * Admin: hapus user.
+ */
+export async function deleteUser(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const userId = String(formData.get("user_id"));
+
+  if (userId === admin.id) return { success: false, error: "Tidak dapat menghapus akun sendiri." };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return { success: false, error: "User tidak ditemukan." };
+
+    if (user.role === "ADMIN") {
+      const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+      if (adminCount <= 1) return { success: false, error: "Tidak dapat menghapus admin terakhir." };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.notification.deleteMany({ where: { user_id: userId } });
+      await tx.user.delete({ where: { id: userId } });
+    });
+
+    revalidatePath("/dashboard/admin/users");
+    return { success: true };
+  } catch (error) {
+    console.error("deleteUser error:", error);
+    return { success: false, error: "Terjadi kesalahan saat menghapus user." };
+  }
+}
+
+/**
+ * Admin: buat kategori.
+ */
+export async function createCategory(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const name = String(formData.get("name") || "").trim();
+  const description = (formData.get("description") as string)?.trim() || null;
+
+  if (!name) return { success: false, error: "Nama kategori harus diisi." };
+
+  try {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `kategori-${Date.now()}`;
+    await prisma.category.create({ data: { name, slug, description } });
+    revalidatePath("/dashboard/admin/categories");
+    return { success: true };
+  } catch (error) {
+    console.error("createCategory error:", error);
+    return { success: false, error: "Terjadi kesalahan saat membuat kategori." };
+  }
+}
+
+/**
+ * Admin: hapus kategori.
+ */
+export async function deleteCategory(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const categoryId = String(formData.get("category_id"));
+
+  try {
+    // Set articles to null category before deleting
+    await prisma.article.updateMany({
+      where: { category_id: categoryId },
+      data: { category_id: null },
+    });
+    await prisma.category.delete({ where: { id: categoryId } });
+    revalidatePath("/dashboard/admin/categories");
+    return { success: true };
+  } catch (error) {
+    console.error("deleteCategory error:", error);
+    return { success: false, error: "Terjadi kesalahan saat menghapus kategori." };
+  }
+}

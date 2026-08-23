@@ -1,0 +1,202 @@
+// ============================================================
+// Prisma schema — Blog Santri IMSHUS Isy Karima
+// ============================================================
+// Connection URL is configured in prisma.config.ts
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum ArticleStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  REVISION_REQUIRED
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReviewDecision {
+  PENDING
+  IN_REVIEW
+  REVISION_REQUIRED
+  APPROVED
+}
+
+enum ReviewCommentType {
+  LANGUAGE
+  SPELLING
+  CONTENT
+  FACT
+  SOURCE
+  STRUCTURE
+  FORMAT
+  OTHER
+}
+
+enum ReviewCommentStatus {
+  OPEN
+  RESOLVED
+}
+
+model User {
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  avatar_url String?
+  role       Role     @default(STUDENT)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  articles        Article[]
+  revisions       ArticleRevision[]
+  reviews         Review[]
+  review_comments ReviewComment[]
+  notifications   Notification[]
+  audit_logs      AuditLog[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  articles Article[]
+
+  @@map("categories")
+}
+
+model Article {
+  id                  String   @id @default(uuid())
+  author_id           String
+  category_id         String?
+  title               String
+  slug                String?  @unique
+  excerpt             String?
+  cover_image_url     String?
+  status              ArticleStatus @default(DRAFT)
+  current_revision_id String?  @unique
+  published_at        DateTime?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  author    User       @relation(fields: [author_id], references: [id])
+  category  Category?  @relation(fields: [category_id], references: [id])
+  current_revision ArticleRevision? @relation("CurrentRevision", fields: [current_revision_id], references: [id])
+  revisions ArticleRevision[]
+  reviews   Review[]
+  comments  ReviewComment[]
+  notifications Notification[]
+
+  @@map("articles")
+}
+
+model ArticleRevision {
+  id              String   @id @default(uuid())
+  article_id      String
+  revision_number Int
+  title           String
+  excerpt         String?
+  content         String
+  content_json    Json
+  cover_image_url String?
+  created_by      String
+  created_at      DateTime @default(now())
+
+  article          Article         @relation(fields: [article_id], references: [id])
+  creator          User            @relation(fields: [created_by], references: [id])
+  current_revision Article?        @relation("CurrentRevision")
+  reviews          Review[]
+  comments         ReviewComment[]
+
+  @@unique([article_id, revision_number])
+  @@map("article_revisions")
+}
+
+model Review {
+  id              String   @id @default(uuid())
+  article_id      String
+  revision_id     String
+  reviewer_id     String?
+  decision        ReviewDecision @default(PENDING)
+  general_comment String?
+  created_at      DateTime @default(now())
+  completed_at    DateTime?
+
+  article  Article         @relation(fields: [article_id], references: [id])
+  revision ArticleRevision @relation(fields: [revision_id], references: [id])
+  reviewer User?           @relation(fields: [reviewer_id], references: [id])
+  comments ReviewComment[]
+
+  @@map("reviews")
+}
+
+model ReviewComment {
+  id            String   @id @default(uuid())
+  review_id     String
+  article_id    String
+  revision_id   String
+  reviewer_id   String
+  selected_text String
+  comment       String
+  type          ReviewCommentType @default(OTHER)
+  start_position Json
+  end_position   Json
+  status        ReviewCommentStatus @default(OPEN)
+  created_at    DateTime @default(now())
+  resolved_at   DateTime?
+
+  review   Review         @relation(fields: [review_id], references: [id])
+  article  Article        @relation(fields: [article_id], references: [id])
+  revision ArticleRevision @relation(fields: [revision_id], references: [id])
+  reviewer User           @relation(fields: [reviewer_id], references: [id])
+
+  @@map("review_comments")
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  type       String
+  title      String
+  message    String
+  article_id String?
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user    User?    @relation(fields: [user_id], references: [id])
+  article Article? @relation(fields: [article_id], references: [id])
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  user_id     String
+  action      String
+  entity_type String
+  entity_id   String
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("audit_logs")
+}
