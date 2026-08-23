@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BookOpen, Menu, X, LogIn } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SCHOOL_NAME } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -33,9 +34,14 @@ export function PublicHeader() {
           className="flex items-center gap-2.5"
           aria-label={`${SCHOOL_NAME} - Beranda`}
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <BookOpen className="h-4.5 w-4.5" aria-hidden="true" />
-          </span>
+          <Image
+            src="/imshus-logo.png"
+            alt=""
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-lg object-contain shadow-sm"
+            aria-hidden="true"
+          />
           <span className="font-heading text-lg font-semibold tracking-tight text-primary">
             {SCHOOL_NAME}
           </span>
