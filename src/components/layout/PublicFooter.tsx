@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import Image from "next/image";
 import { SCHOOL_NAME, SCHOOL_SHORT } from "@/lib/constants";
 
 const navLinks = [
@@ -16,9 +16,14 @@ export function PublicFooter() {
         <div className="grid gap-8 sm:grid-cols-3">
           <div className="sm:col-span-1">
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <BookOpen className="h-4 w-4" aria-hidden="true" />
-              </span>
+              <Image
+                src="/imshus-logo.png"
+                alt=""
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-lg object-contain shadow-sm"
+                aria-hidden="true"
+              />
               <p className="font-heading text-base font-semibold text-primary">
                 {SCHOOL_NAME}
               </p>
