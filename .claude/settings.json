@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(node *)",
+      "Bash(pnpm build)",
+      "Bash(pnpm dev)",
+      "Bash(vercel *)",
+      "Bash(curl -s *)",
+      "PowerShell(git *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Select-String *)",
+      "PowerShell(Invoke-RestMethod *)",
+      "PowerShell(Test-Path *)"
+    ]
+  }
+}

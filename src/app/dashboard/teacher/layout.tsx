@@ -20,7 +20,7 @@ export default async function TeacherDashboardLayout({
                 {user.name}
               </span>
             </div>
-                      </div>
+          </div>
         </header>
         <div className="p-4 lg:p-6">{children}</div>
       </main>

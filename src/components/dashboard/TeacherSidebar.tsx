@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { logout } from "@/actions/auth";
 
 const navigation = [
   { name: "Dasbor", href: "/dashboard/teacher", icon: LayoutDashboard, tab: null },
@@ -130,7 +131,7 @@ export function TeacherSidebar({ userName, userRole }: TeacherSidebarProps) {
 
           {/* Logout */}
           <div className="p-3 border-t border-primary/10">
-            <form action="/api/auth/logout" method="POST">
+            <form action={logout}>
               <Button
                 type="submit"
                 variant="outline"

@@ -45,10 +45,12 @@ export async function saveDraft(formData: FormData): Promise<ActionResult> {
           author_id: user.id,
           status: { in: ["DRAFT", "REVISION_REQUIRED"] },
         },
+        include: { current_revision: { select: { id: true } } },
       });
       if (!existing) {
         return { success: false, error: "Artikel tidak ditemukan atau tidak dapat diedit." };
       }
+      // Update artikel utama
       await prisma.article.update({
         where: { id: articleId },
         data: {
@@ -58,6 +60,19 @@ export async function saveDraft(formData: FormData): Promise<ActionResult> {
           cover_image_url: data.cover_image_url ?? null,
         },
       });
+      // Update content pada current_revision agar draft berikutnya tidak kehilangan konten
+      if (existing.current_revision_id) {
+        await prisma.articleRevision.update({
+          where: { id: existing.current_revision_id },
+          data: {
+            title: data.title,
+            excerpt: data.excerpt ?? null,
+            content: data.content,
+            content_json: (data.content_json as object) ?? {},
+            cover_image_url: data.cover_image_url ?? null,
+          },
+        });
+      }
       revalidatePath("/dashboard/student");
       return { success: true };
     } else {
