@@ -265,11 +265,11 @@ export function AdminArticlesTable({
               placeholder="Cari judul, penulis, excerpt..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 size-8"
+              className="pl-9"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px] size-8">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Semua status" />
             </SelectTrigger>
             <SelectContent>
@@ -385,7 +385,7 @@ export function AdminArticlesTable({
                         }
                         disabled={isSubmitting}
                       >
-                        <SelectTrigger className="w-[140px] size-8">
+                        <SelectTrigger className="w-[140px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -416,7 +416,7 @@ export function AdminArticlesTable({
                         }
                         disabled={isSubmitting}
                       >
-                        <SelectTrigger className="w-[130px] size-8 hidden md:flex">
+                        <SelectTrigger className="w-[130px] hidden md:flex">
                           <SelectValue placeholder="Kategori" />
                         </SelectTrigger>
                         <SelectContent>

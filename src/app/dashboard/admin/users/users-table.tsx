@@ -317,7 +317,7 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
                         }
                         disabled={isSubmitting}
                       >
-                        <SelectTrigger className="w-[110px] size-8">
+                        <SelectTrigger className="w-[110px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

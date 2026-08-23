@@ -8,6 +8,7 @@
       "Bash(vercel *)",
       "Bash(curl -s *)",
       "PowerShell(git *)",
+      "PowerShell(vercel *)",
       "PowerShell(Get-Content *)",
       "PowerShell(Get-ChildItem *)",
       "PowerShell(Select-String *)",
