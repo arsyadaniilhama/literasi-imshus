@@ -97,6 +97,12 @@ export async function deleteArticle(formData: FormData): Promise<ActionResult> {
     if (!article) return { success: false, error: "Artikel tidak ditemukan." };
 
     await prisma.$transaction(async (tx) => {
+      // Lepas current_revision_id dulu agar FK articles_current_revision_id_fkey (NO ACTION)
+      // tidak menghalangi penghapusan revisi di bawah.
+      await tx.article.update({
+        where: { id: articleId },
+        data: { current_revision_id: null },
+      });
       await tx.notification.deleteMany({ where: { article_id: articleId } });
       await tx.reviewComment.deleteMany({ where: { article_id: articleId } });
       await tx.review.deleteMany({ where: { article_id: articleId } });

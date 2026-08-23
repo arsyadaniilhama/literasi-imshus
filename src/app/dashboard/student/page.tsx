@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+} from "@/components/ui/alert";
+import {
   ARTICLE_STATUS_LABELS,
   ARTICLE_STATUS_COLORS,
 } from "@/lib/constants";
@@ -27,11 +32,17 @@ import {
 } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 import type { ArticleStatus } from "@/types";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { deleteArticle } from "@/actions/articles";
 
 async function deleteArticleAction(formData: FormData) {
   "use server";
-  await deleteArticle(formData);
+  const result = await deleteArticle(formData);
+  if (!result.success) {
+    redirect(`/dashboard/student?error=${encodeURIComponent(result.error ?? "Gagal menghapus artikel")}`);
+  }
+  revalidatePath("/dashboard/student");
 }
 
 async function getDashboardStats(userId: string) {
@@ -80,9 +91,14 @@ async function getRecentArticles(userId: string) {
   });
 }
 
-export default async function StudentDashboardPage() {
+export default async function StudentDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const user = await requireStudent();
-  const [stats, articles] = await Promise.all([
+  const [{ error }, stats, articles] = await Promise.all([
+    searchParams,
     getDashboardStats(user.id),
     getRecentArticles(user.id),
   ]);
@@ -116,6 +132,12 @@ export default async function StudentDashboardPage() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Gagal</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       {/* Welcome Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

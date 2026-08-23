@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireStudent } from "@/lib/auth/session";
 import { createArticleSchema } from "@/lib/validations";
@@ -93,6 +93,8 @@ export async function saveDraft(formData: FormData): Promise<ActionResult> {
       redirect(`/dashboard/student/articles/${article.id}/edit`);
     }
   } catch (error) {
+    // Jangan menelan error framework Next.js (NEXT_REDIRECT dari redirect())
+    unstable_rethrow(error);
     console.error("saveDraft error:", error);
     return { success: false, error: "Terjadi kesalahan saat menyimpan artikel." };
   }
@@ -234,9 +236,18 @@ export async function deleteArticle(formData: FormData): Promise<ActionResult> {
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Hapus review comments yang berhubungan
+      // 1. Lepas current_revision_id agar FK articles_current_revision_id_fkey (NO ACTION)
+      //    tidak menghalangi penghapusan revisi di bawah.
+      await tx.article.update({
+        where: { id: articleId },
+        data: { current_revision_id: null },
+      });
+      // 2. Hapus notifikasi terkait artikel
+      await tx.notification.deleteMany({ where: { article_id: articleId } });
+      // 3. Hapus review comments yang berhubungan
       await tx.reviewComment.deleteMany({ where: { article_id: articleId } });
       await tx.review.deleteMany({ where: { article_id: articleId } });
+      // 4. Hapus revisi (aman — current_revision_id sudah dilepas)
       await tx.articleRevision.deleteMany({ where: { article_id: articleId } });
       await tx.article.delete({ where: { id: articleId } });
     });
