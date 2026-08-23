@@ -16,35 +16,35 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, initialState);
 
   return (
-    <Card className="relative backdrop-blur-sm bg-card/80 ring-primary/10 shadow-2xl shadow-primary/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)]">
+    <Card className="relative w-full max-w-[480px] [--card-spacing:--spacing(6)] backdrop-blur-sm bg-card/80 ring-primary/10 shadow-2xl shadow-primary/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)]">
       {/* Garis aksen emas */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-gold to-primary"
       />
-      <CardHeader className="text-center">
+      <CardHeader className="text-center gap-2.5">
         <Link href="/" className="mx-auto inline-block mb-4">
           <Image
             src="/imshus-logo.png"
             alt={`${SCHOOL_NAME} - Beranda`}
-            width={48}
-            height={48}
-            className="h-12 w-12 rounded-lg shadow-sm"
+            width={56}
+            height={56}
+            className="h-14 w-14 rounded-lg shadow-sm"
             priority
           />
         </Link>
-        <CardTitle className="text-2xl font-heading">{SCHOOL_NAME}</CardTitle>
+        <CardTitle className="text-3xl font-heading">{SCHOOL_NAME}</CardTitle>
         <CardDescription>Masuk ke akun Anda untuk melanjutkan</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} className="space-y-6">
           {state.error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
               {state.error}
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -53,6 +53,7 @@ export default function LoginPage() {
               autoComplete="email"
               required
               placeholder="santri@ims.hus"
+              className="h-11 px-3.5"
               aria-invalid={state.errors?.email ? "true" : "false"}
               aria-describedby={state.errors?.email ? "email-error" : undefined}
             />
@@ -63,7 +64,7 @@ export default function LoginPage() {
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -72,6 +73,7 @@ export default function LoginPage() {
               autoComplete="current-password"
               required
               placeholder="••••••••"
+              className="h-11 px-3.5"
               aria-invalid={state.errors?.password ? "true" : "false"}
               aria-describedby={state.errors?.password ? "password-error" : undefined}
             />
@@ -84,7 +86,8 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            className="relative w-full overflow-hidden bg-gradient-to-r from-primary to-gold shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-px hover:shadow-xl hover:shadow-gold/30"
+            size="lg"
+            className="relative h-10 w-full overflow-hidden border-2 border-gold/60 bg-gradient-to-r from-primary via-primary to-gold text-base font-semibold tracking-wide text-primary-foreground shadow-[0_8px_30px_rgba(0,0,0,0.25),inset_0_0_0_1px_rgba(255,255,255,0.25)] transition-all duration-300 hover:-translate-y-px hover:shadow-[0_12px_40px_rgba(0,0,0,0.3),inset_0_0_0_1px_rgba(255,255,255,0.35)] hover:border-gold"
             disabled={pending}
           >
             <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">

@@ -19,7 +19,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         style={{ animationDelay: "4s" }}
       />
       <IslamicPattern className="opacity-[0.3]" />
-      <div className="relative w-full max-w-md">{children}</div>
+      <div className="relative w-full max-w-[480px]">{children}</div>
     </div>
   );
 }

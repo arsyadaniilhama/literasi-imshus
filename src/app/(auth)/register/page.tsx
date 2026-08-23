@@ -22,57 +22,61 @@ export default function RegisterPage() {
   const [state, action, pending] = useActionState(register, null);
 
   return (
-    <Card className="relative w-full max-w-md backdrop-blur-sm bg-card/80 ring-primary/10 shadow-2xl shadow-primary/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)]">
+    <Card className="relative w-full max-w-[480px] [--card-spacing:--spacing(6)] backdrop-blur-sm bg-card/80 ring-primary/10 shadow-2xl shadow-primary/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)]">
         {/* Garis aksen emas */}
         <span
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-gold to-primary"
         />
-        <CardHeader className="text-center">
-          <Link href="/" className="mx-auto inline-block mb-2">
+        <CardHeader className="text-center gap-2.5">
+          <Link href="/" className="mx-auto inline-block">
             <Image
               src="/imshus-logo.png"
               alt={`${SCHOOL_NAME} - Beranda`}
-              width={48}
-              height={48}
-              className="h-12 w-12 rounded-lg shadow-sm"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-lg shadow-sm"
               priority
             />
           </Link>
-          <CardTitle className="text-2xl font-heading">Daftar</CardTitle>
+          <CardTitle className="text-3xl font-heading">Daftar</CardTitle>
           <CardDescription>
             {SCHOOL_NAME} — Blog Santri
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={action} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nama Lengkap</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Masukkan nama lengkap"
-                required
-              />
-              {state?.errors?.name && (
-                <p className="text-sm text-destructive">{state.errors.name[0]}</p>
-              )}
+          <form action={action} className="space-y-6">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Label htmlFor="name">Nama Lengkap</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Masukkan nama lengkap"
+                  required
+                  className="h-11 px-3.5"
+                />
+                {state?.errors?.name && (
+                  <p className="text-sm text-destructive">{state.errors.name[0]}</p>
+                )}
+              </div>
+              <div className="space-y-2.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="santri@example.com"
+                  required
+                  className="h-11 px-3.5"
+                />
+                {state?.errors?.email && (
+                  <p className="text-sm text-destructive">{state.errors.email[0]}</p>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="santri@example.com"
-                required
-              />
-              {state?.errors?.email && (
-                <p className="text-sm text-destructive">{state.errors.email[0]}</p>
-              )}
-            </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -80,6 +84,7 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="Minimal 8 karakter"
                 required
+                className="h-11 px-3.5"
               />
               {state?.errors?.password && (
                 <p className="text-sm text-destructive">{state.errors.password[0]}</p>
@@ -92,7 +97,8 @@ export default function RegisterPage() {
             )}
             <Button
               type="submit"
-              className="relative w-full overflow-hidden bg-gradient-to-r from-primary to-gold shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-px hover:shadow-xl hover:shadow-gold/30"
+              size="lg"
+              className="relative h-10 w-full overflow-hidden border-2 border-gold/60 bg-gradient-to-r from-primary via-primary to-gold text-base font-semibold tracking-wide text-primary-foreground shadow-[0_8px_30px_rgba(0,0,0,0.25),inset_0_0_0_1px_rgba(255,255,255,0.25)] transition-all duration-300 hover:-translate-y-px hover:shadow-[0_12px_40px_rgba(0,0,0,0.3),inset_0_0_0_1px_rgba(255,255,255,0.35)] hover:border-gold"
               disabled={pending}
             >
               <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">

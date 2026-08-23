@@ -73,7 +73,7 @@ export function PublicHeader() {
               />
             </Link>
           ))}
-          <Button asChild size="sm" className="relative ml-2 overflow-hidden bg-gradient-to-r from-primary to-gold shadow-md shadow-primary/20 transition-all duration-300 hover:-translate-y-px hover:shadow-lg hover:shadow-gold/25">
+          <Button asChild size="lg" className="relative ml-2 shrink-0 h-10 overflow-hidden border-2 border-gold/60 bg-gradient-to-r from-primary via-primary to-gold text-base font-semibold tracking-wide text-primary-foreground shadow-[0_8px_30px_rgba(0,0,0,0.25),inset_0_0_0_1px_rgba(255,255,255,0.25)] transition-all duration-300 hover:-translate-y-px hover:shadow-[0_12px_40px_rgba(0,0,0,0.3),inset_0_0_0_1px_rgba(255,255,255,0.35)] hover:border-gold">
             <Link href="/login">
               <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
               Masuk
@@ -126,7 +126,7 @@ export function PublicHeader() {
                 />
               </Link>
             ))}
-            <Button asChild className="relative mt-2 w-full overflow-hidden bg-gradient-to-r from-primary to-gold shadow-md shadow-primary/20 transition-all duration-300 hover:-translate-y-px hover:shadow-lg hover:shadow-gold/25">
+            <Button asChild className="relative mt-2 h-10 w-full overflow-hidden border-2 border-gold/60 bg-gradient-to-r from-primary via-primary to-gold text-base font-semibold tracking-wide text-primary-foreground shadow-[0_8px_30px_rgba(0,0,0,0.25),inset_0_0_0_1px_rgba(255,255,255,0.25)] transition-all duration-300 hover:-translate-y-px hover:shadow-[0_12px_40px_rgba(0,0,0,0.3),inset_0_0_0_1px_rgba(255,255,255,0.35)] hover:border-gold">
               <Link href="/login">
                 <LogIn className="h-4 w-4" aria-hidden="true" />
                 Masuk
