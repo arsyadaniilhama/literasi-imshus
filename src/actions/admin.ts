@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
+import { createArticleSchema } from "@/lib/validations";
 import type { ActionResult, ArticleStatus } from "@/types";
 
 /**
@@ -162,6 +163,92 @@ export async function updateArticleCategory(formData: FormData): Promise<ActionR
   } catch (error) {
     console.error("updateArticleCategory error:", error);
     return { success: false, error: "Terjadi kesalahan saat mengubah kategori artikel." };
+  }
+}
+
+/**
+ * Admin: edit konten artikel (judul, konten, excerpt, cover, kategori).
+ * Membuat ArticleRevision baru & memperbarui current_revision_id.
+ * Status & slug artikel TETAP (tidak diubah).
+ */
+export async function adminUpdateArticle(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const articleId = String(formData.get("article_id"));
+
+  const raw = Object.fromEntries(formData);
+  const parsed = createArticleSchema.safeParse({
+    title: raw.title,
+    content: raw.content,
+    content_json: raw.content_json ? JSON.parse(String(raw.content_json)) : undefined,
+    category_id: raw.category_id || null,
+    excerpt: raw.excerpt || undefined,
+    cover_image_url: raw.cover_image_url || null,
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const data = parsed.data;
+
+  try {
+    const article = await prisma.article.findUnique({ where: { id: articleId } });
+    if (!article) return { success: false, error: "Artikel tidak ditemukan." };
+
+    // Cari revision terakhir untuk increment number
+    const lastRev = await prisma.articleRevision.findFirst({
+      where: { article_id: articleId },
+      orderBy: { revision_number: "desc" },
+    });
+    const nextNumber = (lastRev?.revision_number ?? 0) + 1;
+
+    await prisma.$transaction(async (tx) => {
+      // Buat revision baru
+      const revision = await tx.articleRevision.create({
+        data: {
+          article_id: articleId,
+          revision_number: nextNumber,
+          title: data.title,
+          excerpt: data.excerpt ?? null,
+          content: data.content,
+          content_json: (data.content_json as object) ?? {},
+          cover_image_url: data.cover_image_url ?? null,
+          created_by: admin.id,
+        },
+      });
+
+      // Update artikel — status & slug TETAP
+      await tx.article.update({
+        where: { id: articleId },
+        data: {
+          title: data.title,
+          excerpt: data.excerpt ?? null,
+          cover_image_url: data.cover_image_url ?? null,
+          category_id: data.category_id ?? null,
+          current_revision_id: revision.id,
+        },
+      });
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        user_id: admin.id,
+        action: "ADMIN_UPDATED_ARTICLE_CONTENT",
+        entity_type: "article",
+        entity_id: articleId,
+        metadata: { title: data.title, revision: nextNumber },
+      },
+    });
+
+    revalidatePath("/dashboard/admin/articles");
+    if (article.slug) revalidatePath(`/articles/${article.slug}`);
+    return { success: true };
+  } catch (error) {
+    console.error("adminUpdateArticle error:", error);
+    return { success: false, error: "Terjadi kesalahan saat mengupdate artikel." };
   }
 }
 

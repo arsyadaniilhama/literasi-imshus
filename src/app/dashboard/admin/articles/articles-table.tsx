@@ -44,8 +44,9 @@ import {
   ARTICLE_STATUS_COLORS,
   type ArticleStatus,
 } from "@/lib/constants";
-import { Search, Loader2, Trash2, Archive, Edit3 } from "lucide-react";
+import { Search, Loader2, Trash2, Archive, Edit3, PenLine } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { timeAgo } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -96,6 +97,7 @@ export function AdminArticlesTable({
   articles: initialArticles,
   categories,
 }: AdminArticlesTableProps) {
+  const router = useRouter();
   const [articles, setArticles] = useState(initialArticles);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -429,7 +431,7 @@ export function AdminArticlesTable({
                         </SelectContent>
                       </Select>
 
-                      {/* Edit button */}
+                      {/* Edit button (status & kategori) */}
                       <Button
                         variant="ghost"
                         size="icon-sm"
@@ -437,7 +439,23 @@ export function AdminArticlesTable({
                         disabled={isSubmitting}
                       >
                         <Edit3 className="size-4" />
-                        <span className="sr-only">Edit</span>
+                        <span className="sr-only">Edit Status</span>
+                      </Button>
+
+                      {/* Edit Konten button */}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/admin/articles/${article.id}/edit`
+                          )
+                        }
+                        disabled={isSubmitting}
+                        title="Edit konten artikel"
+                      >
+                        <PenLine className="size-4" />
+                        <span className="sr-only">Edit Konten</span>
                       </Button>
 
                       {/* Archive button */}
