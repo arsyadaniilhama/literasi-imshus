@@ -139,23 +139,6 @@ export function ReviewWorkspace({
     return () => el.removeEventListener("scroll", onScroll);
   }, [isPopoverOpen]);
 
-  // Tutup toolbar saat klik di luar
-  React.useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        toolbarPos &&
-        !target.closest("[data-review-toolbar]") &&
-        !target.closest("[data-review-popover]")
-      ) {
-        setDraft(null);
-        setToolbarPos(null);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [toolbarPos]);
-
   // ---- Handler: blok teks di artikel ----
   const handleMouseUp = (event: MouseEvent) => {
     const sel = window.getSelection();
@@ -599,7 +582,20 @@ export function ReviewWorkspace({
       </div>
 
       {/* Popover komentar — trigger = floating toolbar */}
-      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+      <Popover
+        open={isPopoverOpen}
+        onOpenChange={(open) => {
+          setIsPopoverOpen(open);
+          // Bersihkan draft/toolbar saat popover ditutup (klik luar, submit, atau batal).
+          // Catatan: jangan pakai mousedown manual di luar — Radix Select di-render
+          // via portal, jadi klik pada opsi dropdown tidak berada dalam elemen popover.
+          if (!open) {
+            setDraft(null);
+            setToolbarPos(null);
+            setCommentText("");
+          }
+        }}
+      >
         {draft && toolbarPos && (
           <PopoverTrigger asChild>
             <Button
