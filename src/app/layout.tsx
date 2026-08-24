@@ -36,6 +36,9 @@ export const metadata: Metadata = {
     template: `%s | ${SCHOOL_SHORT}`,
   },
   description: SITE_DESCRIPTION,
+  verification: {
+    google: "epw7CsLOZVzH1XggzU7k__L0r4Di_jhL-Y3yYn6dkgA",
+  },
   openGraph: {
     type: "website",
     locale: "id_ID",
