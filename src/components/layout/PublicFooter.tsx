@@ -52,12 +52,12 @@ export function PublicFooter() {
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>Pesantren IMSHUS Isy Karima</li>
               <li>Karanganyar, Jawa Tengah</li>
-              <li>info@imshus.sch.id</li>
+              <li>takhoshush.imqs@gmail.com</li>
             </ul>
           </div>
         </div>
         <p className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} {SCHOOL_SHORT}. Dibuat dengan ❤️ oleh para santri.
+          © {new Date().getFullYear()} {SCHOOL_SHORT}.
         </p>
       </div>
     </footer>
