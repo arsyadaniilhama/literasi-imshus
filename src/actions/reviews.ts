@@ -131,6 +131,45 @@ export async function createReviewComment(formData: FormData): Promise<ActionRes
 }
 
 /**
+ * Guru menghapus catatan review — hard delete dari DB (untuk koreksi input yang salah).
+ */
+export async function deleteReviewComment(formData: FormData): Promise<ActionResult> {
+  const user = await requireTeacher();
+  const commentId = String(formData.get("comment_id"));
+  const articleId = String(formData.get("article_id"));
+
+  try {
+    // Validasi komentar ada & milik review artikel ini
+    const comment = await prisma.reviewComment.findUnique({ where: { id: commentId } });
+    if (!comment || comment.article_id !== articleId) {
+      return { success: false, error: "Catatan tidak ditemukan." };
+    }
+
+    // Hanya bisa hapus jika review masih aktif (PENDING/IN_REVIEW)
+    const review = await prisma.review.findUnique({ where: { id: comment.review_id } });
+    if (!review || (review.decision !== "PENDING" && review.decision !== "IN_REVIEW")) {
+      return { success: false, error: "Catatan tidak dapat dihapus setelah review selesai." };
+    }
+
+    await prisma.reviewComment.delete({ where: { id: commentId } });
+    await prisma.auditLog.create({
+      data: {
+        user_id: user.id,
+        action: "TEACHER_DELETED_COMMENT",
+        entity_type: "review_comment",
+        entity_id: commentId,
+      },
+    });
+
+    revalidatePath(`/dashboard/teacher/reviews/${articleId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("deleteReviewComment error:", error);
+    return { success: false, error: "Terjadi kesalahan saat menghapus catatan." };
+  }
+}
+
+/**
  * Guru meminta revisi — artikel menjadi REVISION_REQUIRED, santri dapat mengedit.
  */
 export async function requestRevision(formData: FormData): Promise<ActionResult> {

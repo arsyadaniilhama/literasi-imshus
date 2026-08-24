@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { CommentTypeBadge } from "@/components/review/CommentTypeBadge";
+import { Trash2, Loader2 } from "lucide-react";
 import {
   REVIEW_COMMENT_TYPE_COLORS,
   REVIEW_COMMENT_TYPE_DOT,
@@ -13,12 +14,16 @@ interface ReviewCommentPanelProps {
   comments: ReviewComment[];
   onCommentClick?: (comment: ReviewComment) => void;
   activeCommentId?: string | null;
+  onDeleteComment?: (comment: ReviewComment) => void;
+  deletingId?: string | null;
 }
 
 export function ReviewCommentPanel({
   comments,
   onCommentClick,
   activeCommentId,
+  onDeleteComment,
+  deletingId,
 }: ReviewCommentPanelProps) {
   if (comments.length === 0) {
     return (
@@ -48,6 +53,8 @@ export function ReviewCommentPanel({
             comment={comment}
             onClick={onCommentClick}
             isSelected={activeCommentId === comment.id}
+            onDelete={onDeleteComment}
+            isDeleting={deletingId === comment.id}
           />
         ))}
       </div>
@@ -59,16 +66,26 @@ function ReviewCommentCard({
   comment,
   onClick,
   isSelected = false,
+  onDelete,
+  isDeleting = false,
 }: {
   comment: ReviewComment;
   onClick?: (comment: ReviewComment) => void;
   isSelected?: boolean;
+  onDelete?: (comment: ReviewComment) => void;
+  isDeleting?: boolean;
 }) {
   const type = comment.type as ReviewCommentType;
   const dotColor = REVIEW_COMMENT_TYPE_DOT[type] || "bg-teal-500";
 
   const handleClick = () => {
     onClick?.(comment);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    // Jangan memicu onCommentClick (lompat ke highlight)
+    e.stopPropagation();
+    onDelete?.(comment);
   };
 
   return (
@@ -88,7 +105,25 @@ function ReviewCommentCard({
             &quot;{comment.selected_text}&quot;
           </p>
         </div>
-        <CommentTypeBadge type={type} />
+        <div className="flex items-center gap-1 shrink-0">
+          <CommentTypeBadge type={type} />
+          {onDelete && (
+            <button
+              type="button"
+              onClick={handleDeleteClick}
+              aria-label="Hapus catatan"
+              title="Hapus catatan"
+              disabled={isDeleting}
+              className="rounded p-1 text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-destructive disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {isDeleting ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="size-3.5" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Isi komentar */}

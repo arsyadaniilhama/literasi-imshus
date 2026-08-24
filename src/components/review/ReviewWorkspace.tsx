@@ -34,6 +34,7 @@ import { HighlightMark } from "@/components/review/HighlightMark";
 import { ReviewCommentPanel } from "@/components/review/ReviewCommentPanel";
 import {
   createReviewComment,
+  deleteReviewComment,
   requestRevision,
   approveArticle,
 } from "@/actions/reviews";
@@ -45,6 +46,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   ScrollText,
+  Trash2,
 } from "lucide-react";
 import type {
   ReviewComment,
@@ -95,6 +97,7 @@ export function ReviewWorkspace({
   const [commentType, setCommentType] = React.useState<ReviewCommentType>("LANGUAGE");
   const [saving, setSaving] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [activeCommentId, setActiveCommentId] = React.useState<string | null>(null);
   const [showGeneralComment, setShowGeneralComment] = React.useState(false);
   const [generalText, setGeneralText] = React.useState(generalComment ?? "");
@@ -351,6 +354,65 @@ export function ReviewWorkspace({
     return ed.view.domAtPos(pos).node;
   };
 
+  // Hapus semua mark highlight dengan commentId tertentu dari editor
+  const removeHighlightForComment = (ed: Editor, commentId: string) => {
+    const markType = ed.schema.marks.highlightMark;
+    if (!markType) return;
+
+    const ranges: { from: number; to: number }[] = [];
+    ed.state.doc.descendants((node, pos) => {
+      const hasMatch = node.marks.some(
+        (m) =>
+          m.type.name === "highlightMark" && m.attrs.commentId === commentId
+      );
+      if (hasMatch) {
+        ranges.push({ from: pos, to: pos + node.nodeSize });
+      }
+    });
+
+    if (ranges.length === 0) return;
+
+    const tr = ed.state.tr;
+    ranges.forEach(({ from, to }) => {
+      tr.removeMark(from, to, markType);
+    });
+    ed.view.dispatch(tr);
+  };
+
+  // ---- Hapus catatan ----
+  const handleDeleteComment = async (comment: ReviewComment) => {
+    if (
+      !window.confirm(
+        "Hapus catatan ini? Highlight pada artikel juga akan dihapus."
+      )
+    )
+      return;
+
+    setDeletingId(comment.id);
+    try {
+      const fd = new FormData();
+      fd.append("comment_id", comment.id);
+      fd.append("article_id", articleId);
+
+      const result = await deleteReviewComment(fd);
+      if (!result.success) {
+        toast.error(result.error || "Gagal menghapus catatan.");
+        return;
+      }
+
+      // Optimistic: hapus dari daftar & hilangkan highlight di editor
+      setComments((prev) => prev.filter((c) => c.id !== comment.id));
+      if (editor) {
+        removeHighlightForComment(editor, comment.id);
+      }
+      toast.success("Catatan berhasil dihapus.");
+    } catch {
+      toast.error("Terjadi kesalahan saat menghapus catatan.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   // ---- Minta Revisi ----
   const handleRequestRevision = async () => {
     if (comments.length === 0 && !generalText.trim()) {
@@ -553,6 +615,8 @@ export function ReviewWorkspace({
               comments={comments}
               onCommentClick={handleCommentClick}
               activeCommentId={activeCommentId}
+              onDeleteComment={handleDeleteComment}
+              deletingId={deletingId}
             />
           </div>
         </div>
