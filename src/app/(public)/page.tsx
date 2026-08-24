@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +8,20 @@ import { Input } from "@/components/ui/input";
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { IslamicPattern } from "@/components/ui/islamic-pattern";
 import { Search, ArrowRight, BookOpen, Users, Sparkles } from "lucide-react";
+import { SITE_URL, SCHOOL_NAME, SCHOOL_SHORT } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
+
+const SITE_DESCRIPTION =
+  "Platform publikasi tulisan santri IMSHUS Isy Karima dengan sistem review guru. Baca cerita, opini, dan puisi terbaik dari para santri.";
+
+export const metadata: Metadata = {
+  // title tidak di-set: root layout default sudah = SCHOOL_SHORT (tanpa suffix template)
+  description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
+};
 
 async function getLatestArticles() {
   return prisma.article.findMany({
@@ -41,8 +54,40 @@ export default async function HomePage() {
     getCategories(),
   ]);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        url: `${SITE_URL}/`,
+        name: SCHOOL_SHORT,
+        description: SITE_DESCRIPTION,
+        inLanguage: "id-ID",
+        publisher: { "@id": `${SITE_URL}/#organization` },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: SCHOOL_NAME,
+        url: `${SITE_URL}/`,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_URL}/imshus-logo.png`,
+          width: 512,
+          height: 512,
+        },
+      },
+    ],
+  };
+
   return (
     <div>
+      {/* Structured data untuk mesin pencari */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-primary/5 via-background to-gold/10">
         <IslamicPattern className="opacity-[0.4]" />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Fraunces, Playfair_Display } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_URL, SCHOOL_NAME, SCHOOL_SHORT } from "@/lib/constants";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,13 +26,43 @@ const playfair = Playfair_Display({
   weight: "variable",
 });
 
+const SITE_DESCRIPTION =
+  "Platform publikasi tulisan santri IMSHUS Isy Karima dengan sistem review guru. Baca cerita, opini, dan puisi terbaik dari para santri.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Blog Santri IMSHUS Isy Karima",
-    template: "%s | Blog Santri IMSHUS Isy Karima",
+    default: SCHOOL_SHORT,
+    template: `%s | ${SCHOOL_SHORT}`,
   },
-  description:
-    "Platform publikasi tulisan santri IMSHUS Isy Karima dengan sistem review guru.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: SCHOOL_SHORT,
+    title: SCHOOL_SHORT,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: "/imshus-logo.png",
+        width: 512,
+        height: 512,
+        alt: `${SCHOOL_NAME} - ${SCHOOL_SHORT}`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SCHOOL_SHORT,
+    description: SITE_DESCRIPTION,
+    images: ["/imshus-logo.png"],
+  },
+  icons: {
+    icon: "/icon.png",
+  },
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

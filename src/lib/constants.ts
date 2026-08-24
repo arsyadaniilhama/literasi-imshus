@@ -153,3 +153,10 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
 // ---- Nama sekolah ----
 export const SCHOOL_NAME = "IMSHUS Isy Karima";
 export const SCHOOL_SHORT = "Blog Santri IMSHUS Isy Karima";
+
+// ---- URL situs (untuk SEO: canonical, sitemap, robots) ----
+// Di production selalu pakai URL publik. Di lokal pakai env (bisa override untuk staging).
+export const SITE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://blog-santri.vercel.app"
+    : (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000");

@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { requireStudent } from "@/lib/auth/session";
 import { StudentSidebar } from "@/components/dashboard/StudentSidebar";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function StudentDashboardLayout({
   children,

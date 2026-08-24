@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { htmlToPlainText, countWords } from "@/lib/utils";
 import { ArrowLeft, CalendarDays, Clock, User } from "lucide-react";
+import { SITE_URL, SCHOOL_NAME } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -39,17 +40,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? htmlToPlainText(article.current_revision.content).slice(0, 160)
       : "Baca artikel lengkapnya.");
 
+  const articleUrl = `${SITE_URL}/articles/${article.slug}`;
+
   return {
     title: article.title,
     description,
+    alternates: {
+      canonical: articleUrl,
+    },
     openGraph: {
       title: article.title,
       description,
       type: "article",
       locale: "id_ID",
-      ...(article.cover_image_url ? { images: [article.cover_image_url] } : {}),
+      url: articleUrl,
+      siteName: SCHOOL_NAME,
+      ...(article.cover_image_url
+        ? { images: [{ url: article.cover_image_url }] }
+        : {}),
       authors: article.author?.name ? [article.author.name] : undefined,
       publishedTime: article.published_at?.toISOString(),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description,
+      ...(article.cover_image_url ? { images: [article.cover_image_url] } : {}),
     },
   };
 }
@@ -65,8 +81,61 @@ export default async function ArticleDetailPage({ params }: Props) {
   const content = article.current_revision?.content ?? "";
   const wordCount = countWords(content);
 
+  const articleUrl = `${SITE_URL}/articles/${article.slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        headline: article.title,
+        description: article.excerpt,
+        image: article.cover_image_url ? [article.cover_image_url] : undefined,
+        author: {
+          "@type": "Person",
+          name: article.author?.name ?? "Penulis",
+        },
+        publisher: {
+          "@type": "Organization",
+          name: SCHOOL_NAME,
+        },
+        datePublished: article.published_at?.toISOString(),
+        dateModified: article.updated_at.toISOString(),
+        mainEntityOfPage: articleUrl,
+        inLanguage: "id-ID",
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Beranda",
+            item: `${SITE_URL}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Artikel",
+            item: `${SITE_URL}/articles`,
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: article.title,
+            item: articleUrl,
+          },
+        ],
+      },
+    ],
+  };
+
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      {/* Structured data untuk mesin pencari */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link
         href="/articles"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
