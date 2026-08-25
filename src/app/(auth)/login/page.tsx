@@ -97,12 +97,12 @@ export default function LoginPage() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col gap-2">
+      <CardFooter className="flex flex-col gap-1">
         <p className="text-center text-sm text-muted-foreground">
-          Belum punya akun?{" "}
-          <Link href="/register" className="font-medium text-primary hover:text-primary/80 underline underline-offset-2">
-            Daftar di sini
-          </Link>
+          Akun dibuat oleh admin pesantren.
+        </p>
+        <p className="text-center text-xs text-muted-foreground/80">
+          Hubungi admin jika Anda belum memiliki akun.
         </p>
       </CardFooter>
     </Card>
