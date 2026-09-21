@@ -3,15 +3,64 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ScrollText, LogOut, X, type LucideIcon } from "lucide-react";
+import {
+  ScrollText,
+  LogOut,
+  X,
+  LayoutDashboard,
+  Users,
+  FileText,
+  FolderTree,
+  MessageSquareText,
+  Settings,
+  Inbox,
+  Eye,
+  History,
+  PenTool,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/actions/auth";
 
+/**
+ * Nama ikon yang valid. Server Component pass string (bukan fungsi komponen)
+ * agar bisa melewati batas serialisasi ke Client Component.
+ */
+export type DashboardIconName =
+  | "layoutDashboard"
+  | "users"
+  | "fileText"
+  | "folderTree"
+  | "messageSquareText"
+  | "settings"
+  | "inbox"
+  | "eye"
+  | "history"
+  | "penTool"
+  | "user"
+  | "scrollText";
+
+const ICON_MAP: Record<DashboardIconName, LucideIcon> = {
+  layoutDashboard: LayoutDashboard,
+  users: Users,
+  fileText: FileText,
+  folderTree: FolderTree,
+  messageSquareText: MessageSquareText,
+  settings: Settings,
+  inbox: Inbox,
+  eye: Eye,
+  history: History,
+  penTool: PenTool,
+  user: User,
+  scrollText: ScrollText,
+};
+
 export interface DashboardNavItem {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: DashboardIconName;
   /** Opsional: cocokkan juga dengan query-tab (mis. ?tab=submitted) */
   tab?: string;
 }
@@ -129,7 +178,7 @@ export function DashboardSidebar({
         >
           {items.map((item) => {
             const isActive = isItemActive(item);
-            const Icon = item.icon;
+            const Icon = ICON_MAP[item.icon] ?? ScrollText;
             return (
               <Link
                 key={item.href + (item.tab ?? "")}

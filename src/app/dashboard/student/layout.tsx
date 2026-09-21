@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { LayoutDashboard, FileText, PenTool, User } from "lucide-react";
 import { requireStudent } from "@/lib/auth/session";
 import {
   DashboardSidebar,
@@ -8,10 +7,10 @@ import {
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const NAV_ITEMS: DashboardNavItem[] = [
-  { href: "/dashboard/student", label: "Dasbor", icon: LayoutDashboard },
-  { href: "/dashboard/student/articles", label: "Artikel Saya", icon: FileText },
-  { href: "/dashboard/student/articles/new", label: "Buat Artikel", icon: PenTool },
-  { href: "/dashboard/student/profile", label: "Profil", icon: User },
+  { href: "/dashboard/student", label: "Dasbor", icon: "layoutDashboard" },
+  { href: "/dashboard/student/articles", label: "Artikel Saya", icon: "fileText" },
+  { href: "/dashboard/student/articles/new", label: "Buat Artikel", icon: "penTool" },
+  { href: "/dashboard/student/profile", label: "Profil", icon: "user" },
 ];
 
 export const metadata: Metadata = {

@@ -1,13 +1,4 @@
 import type { Metadata } from "next";
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  FolderTree,
-  MessageSquareText,
-  ScrollText,
-  Settings,
-} from "lucide-react";
 import { requireAdmin } from "@/lib/auth/session";
 import {
   DashboardSidebar,
@@ -16,13 +7,13 @@ import {
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const NAV_ITEMS: DashboardNavItem[] = [
-  { href: "/dashboard/admin", label: "Dasbor", icon: LayoutDashboard },
-  { href: "/dashboard/admin/users", label: "Pengguna", icon: Users },
-  { href: "/dashboard/admin/articles", label: "Artikel", icon: FileText },
-  { href: "/dashboard/admin/categories", label: "Kategori", icon: FolderTree },
-  { href: "/dashboard/admin/reviews", label: "Ulasan", icon: MessageSquareText },
-  { href: "/dashboard/admin/activity", label: "Log Aktivitas", icon: ScrollText },
-  { href: "/dashboard/admin/settings", label: "Pengaturan", icon: Settings },
+  { href: "/dashboard/admin", label: "Dasbor", icon: "layoutDashboard" },
+  { href: "/dashboard/admin/users", label: "Pengguna", icon: "users" },
+  { href: "/dashboard/admin/articles", label: "Artikel", icon: "fileText" },
+  { href: "/dashboard/admin/categories", label: "Kategori", icon: "folderTree" },
+  { href: "/dashboard/admin/reviews", label: "Ulasan", icon: "messageSquareText" },
+  { href: "/dashboard/admin/activity", label: "Log Aktivitas", icon: "scrollText" },
+  { href: "/dashboard/admin/settings", label: "Pengaturan", icon: "settings" },
 ];
 
 export const metadata: Metadata = {

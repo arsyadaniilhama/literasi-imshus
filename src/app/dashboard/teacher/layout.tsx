@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { LayoutDashboard, Inbox, Eye, History } from "lucide-react";
 import { requireTeacher } from "@/lib/auth/session";
 import {
   DashboardSidebar,
@@ -8,23 +7,23 @@ import {
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const NAV_ITEMS: DashboardNavItem[] = [
-  { href: "/dashboard/teacher", label: "Dasbor", icon: LayoutDashboard },
+  { href: "/dashboard/teacher", label: "Dasbor", icon: "layoutDashboard" },
   {
     href: "/dashboard/teacher",
     label: "Artikel Masuk",
-    icon: Inbox,
+    icon: "inbox",
     tab: "submitted",
   },
   {
     href: "/dashboard/teacher",
     label: "Sedang Direview",
-    icon: Eye,
+    icon: "eye",
     tab: "reviewing",
   },
   {
     href: "/dashboard/teacher",
     label: "Riwayat",
-    icon: History,
+    icon: "history",
     tab: "history",
   },
 ];
