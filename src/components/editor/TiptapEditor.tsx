@@ -237,6 +237,8 @@ export function TiptapEditor({
           outline: none;
           min-height: 320px;
           padding: 0.5rem 0;
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
         .tiptap-editor-wrapper .tiptap > * + * {
           margin-top: 0.5rem;

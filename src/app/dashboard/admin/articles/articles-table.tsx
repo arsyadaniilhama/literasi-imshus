@@ -28,6 +28,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -36,7 +43,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { updateArticleStatus, archiveArticle, deleteArticle, updateArticleCategory } from "@/actions/admin";
 import {
@@ -44,7 +50,17 @@ import {
   ARTICLE_STATUS_COLORS,
   type ArticleStatus,
 } from "@/lib/constants";
-import { Search, Loader2, Trash2, Archive, Edit3, PenLine } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  Trash2,
+  Archive,
+  Edit3,
+  PenLine,
+  MoreHorizontal,
+  ExternalLink,
+} from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { timeAgo } from "@/lib/utils";
@@ -116,46 +132,6 @@ export function AdminArticlesTable({
       return matchesSearch && matchesStatus;
     });
   }, [initialArticles, searchQuery, statusFilter]);
-
-  const handleStatusChange = async (articleId: string, newStatus: ArticleStatus) => {
-    setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append("article_id", articleId);
-    formData.append("status", newStatus);
-
-    const result = await updateArticleStatus(formData);
-
-    if (result.success) {
-      toast.success("Status artikel berhasil diubah");
-      setArticles((prev) =>
-        prev.map((a) => (a.id === articleId ? { ...a, status: newStatus } : a))
-      );
-    } else {
-      toast.error(result.error ?? "Gagal mengubah status");
-    }
-    setIsSubmitting(false);
-  };
-
-  const handleCategoryChange = async (articleId: string, newCategoryId: string | null) => {
-    setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append("article_id", articleId);
-    formData.append("category_id", newCategoryId ?? "");
-
-    const result = await updateArticleCategory(formData);
-
-    if (result.success) {
-      toast.success("Kategori artikel berhasil diubah");
-      setArticles((prev) =>
-        prev.map((a) =>
-          a.id === articleId ? { ...a, category: newCategoryId ? categories.find(c => c.id === newCategoryId) ?? null : null } : a
-        )
-      );
-    } else {
-      toast.error(result.error ?? "Gagal mengubah kategori");
-    }
-    setIsSubmitting(false);
-  };
 
   const handleArchive = async (articleId: string) => {
     setIsSubmitting(true);
@@ -303,12 +279,12 @@ export function AdminArticlesTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-[40px]">#</TableHead>
-              <TableHead>Artikel</TableHead>
+              <TableHead className="min-w-[200px]">Artikel</TableHead>
               <TableHead className="hidden lg:table-cell">Penulis</TableHead>
               <TableHead className="hidden md:table-cell">Kategori</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden lg:table-cell">Dibuat</TableHead>
-              <TableHead className="w-[180px] text-right">Aksi</TableHead>
+              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="hidden xl:table-cell">Dibuat</TableHead>
+              <TableHead className="w-[90px] text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -327,14 +303,32 @@ export function AdminArticlesTable({
                   <TableCell className="text-muted-foreground">
                     {index + 1}
                   </TableCell>
-                  <TableCell className="max-w-[300px]">
+                  <TableCell className="min-w-[200px] whitespace-normal">
                     <div>
-                      <p className="font-medium truncate">{article.title}</p>
+                      <Link
+                        href={`/dashboard/admin/articles/${article.id}/edit`}
+                        className="font-medium text-foreground hover:text-primary transition-colors line-clamp-2"
+                        title={article.title}
+                      >
+                        {article.title}
+                      </Link>
                       {article.excerpt && (
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 hidden sm:block">
                           {article.excerpt}
                         </p>
                       )}
+                      {/* Info ringkas di bawah judul pada layar kecil */}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-muted-foreground lg:hidden">
+                        <span>{article.author.name}</span>
+                        {article.category && (
+                          <>
+                            <span>•</span>
+                            <span className="md:hidden">{article.category.name}</span>
+                          </>
+                        )}
+                        <span className="xl:hidden">•</span>
+                        <span className="xl:hidden">{timeAgo(article.created_at)}</span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
@@ -351,7 +345,7 @@ export function AdminArticlesTable({
                           article.author.name.charAt(0).toUpperCase()
                         )}
                       </div>
-                      <span className="text-sm">{article.author.name}</span>
+                      <span className="text-sm truncate max-w-[140px]">{article.author.name}</span>
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -372,80 +366,18 @@ export function AdminArticlesTable({
                       {ARTICLE_STATUS_LABELS[article.status]}
                     </Badge>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell">
+                  <TableCell className="hidden xl:table-cell">
                     <span className="text-sm text-muted-foreground">
                       {timeAgo(article.created_at)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {/* Status dropdown */}
-                      <Select
-                        value={article.status}
-                        onValueChange={(value) =>
-                          handleStatusChange(article.id, value as ArticleStatus)
-                        }
-                        disabled={isSubmitting}
-                      >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ALL_STATUSES.map((s) => (
-                            <SelectItem key={s} value={s}>
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "font-normal border-transparent w-full justify-start",
-                                  ARTICLE_STATUS_COLORS[s]
-                                )}
-                              >
-                                {ARTICLE_STATUS_LABELS[s]}
-                              </Badge>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {/* Category dropdown */}
-                      <Select
-                        value={article.category?.id ?? "none"}
-                        onValueChange={(value) =>
-                          handleCategoryChange(
-                            article.id,
-                            value === "none" ? null : value
-                          )
-                        }
-                        disabled={isSubmitting}
-                      >
-                        <SelectTrigger className="w-[130px] hidden md:flex">
-                          <SelectValue placeholder="Kategori" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">— Tanpa Kategori —</SelectItem>
-                          {categories.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {/* Edit button (status & kategori) */}
+                      {/* Tombol Edit Konten langsung */}
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        onClick={() => openEditDialog(article)}
-                        disabled={isSubmitting}
-                      >
-                        <Edit3 className="size-4" />
-                        <span className="sr-only">Edit Status</span>
-                      </Button>
-
-                      {/* Edit Konten button */}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
+                        className="text-muted-foreground hover:text-primary"
                         onClick={() =>
                           router.push(
                             `/dashboard/admin/articles/${article.id}/edit`
@@ -458,38 +390,73 @@ export function AdminArticlesTable({
                         <span className="sr-only">Edit Konten</span>
                       </Button>
 
-                      {/* Archive button */}
-                      {article.status !== "ARCHIVED" && (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleArchive(article.id)}
-                          disabled={isSubmitting}
-                        >
-                          <Archive className="size-4" />
-                          <span className="sr-only">Arsipkan</span>
-                        </Button>
-                      )}
+                      {/* Dropdown Menu untuk aksi lainnya */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-muted-foreground hover:text-foreground"
+                            disabled={isSubmitting}
+                            title="Menu aksi"
+                          >
+                            <MoreHorizontal className="size-4" />
+                            <span className="sr-only">Menu Aksi</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              router.push(
+                                `/dashboard/admin/articles/${article.id}/edit`
+                              )
+                            }
+                          >
+                            <PenLine className="mr-2 size-4" />
+                            Edit Konten
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => openEditDialog(article)}>
+                            <Edit3 className="mr-2 size-4" />
+                            Ubah Status & Kategori
+                          </DropdownMenuItem>
+                          {article.status === "PUBLISHED" && article.slug && (
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/articles/${article.slug}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <ExternalLink className="mr-2 size-4" />
+                                Lihat di Website
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          {article.status !== "ARCHIVED" && (
+                            <DropdownMenuItem
+                              onSelect={() => handleArchive(article.id)}
+                            >
+                              <Archive className="mr-2 size-4" />
+                              Arsipkan Artikel
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            onSelect={() => setDeleteDialogOpen(article.id)}
+                          >
+                            <Trash2 className="mr-2 size-4" />
+                            Hapus Artikel
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
-                      {/* Delete button */}
+                      {/* Dialog konfirmasi hapus artikel */}
                       <AlertDialog
                         open={deleteDialogOpen === article.id}
                         onOpenChange={(open) => {
                           if (!open) setDeleteDialogOpen(null);
                         }}
                       >
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            disabled={isSubmitting}
-                            onClick={() => setDeleteDialogOpen(article.id)}
-                          >
-                            <Trash2 className="size-4" />
-                            <span className="sr-only">Hapus</span>
-                          </Button>
-                        </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Hapus Artikel?</AlertDialogTitle>

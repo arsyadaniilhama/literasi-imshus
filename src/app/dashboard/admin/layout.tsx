@@ -38,7 +38,7 @@ export default async function AdminLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader title="Dasbor Admin" userName={admin.name} />
         <main className="flex-1 p-4 lg:p-6">
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
+          <div className="mx-auto w-full max-w-7xl xl:max-w-[1440px]">{children}</div>
         </main>
       </div>
     </div>

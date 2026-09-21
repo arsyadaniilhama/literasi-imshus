@@ -489,7 +489,7 @@ export function ArticleEditClient({
               />
             ) : (
               <div
-                className="min-h-[320px] rounded-lg border border-border bg-background p-3"
+                className="article-content min-h-[320px] rounded-lg border border-border bg-background p-4 sm:p-6 break-words overflow-hidden"
                 dangerouslySetInnerHTML={{
                   __html: content || "<p>Konten masih kosong.</p>",
                 }}
