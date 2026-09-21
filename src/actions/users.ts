@@ -268,7 +268,7 @@ export async function resetUserPassword(formData: FormData): Promise<ActionResul
  * Admin: buat kategori.
  */
 export async function createCategory(formData: FormData): Promise<ActionResult> {
-  const admin = await requireAdmin();
+  await requireAdmin();
   const name = String(formData.get("name") || "").trim();
   const description = (formData.get("description") as string)?.trim() || null;
 
@@ -289,7 +289,7 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
  * Admin: hapus kategori.
  */
 export async function deleteCategory(formData: FormData): Promise<ActionResult> {
-  const admin = await requireAdmin();
+  await requireAdmin();
   const categoryId = String(formData.get("category_id"));
 
   try {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -9,11 +10,26 @@ import { htmlToPlainText, countWords } from "@/lib/utils";
 import { ArrowLeft, CalendarDays, Clock, User } from "lucide-react";
 import { SITE_URL, SCHOOL_NAME } from "@/lib/constants";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateStaticParams() {
+  try {
+    const articles = await prisma.article.findMany({
+      where: { status: "PUBLISHED" },
+      select: { slug: true },
+      take: 100,
+    });
+    return articles
+      .filter((a) => Boolean(a.slug))
+      .map((a) => ({ slug: a.slug as string }));
+  } catch {
+    return [];
+  }
+}
 
 async function getArticle(slug: string) {
   return prisma.article.findFirst({
@@ -191,12 +207,14 @@ export default async function ArticleDetailPage({ params }: Props) {
 
       {/* Cover */}
       {article.cover_image_url && (
-        <div className="mt-8 overflow-hidden rounded-xl shadow-lg">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-xl shadow-lg">
+          <Image
             src={article.cover_image_url}
             alt={`Sampul artikel ${article.title}`}
-            className="h-auto w-full object-cover"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 768px"
+            className="object-cover"
           />
         </div>
       )}

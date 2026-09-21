@@ -46,7 +46,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   ScrollText,
-  Trash2,
 } from "lucide-react";
 import type {
   ReviewComment,
@@ -118,8 +117,8 @@ export function ReviewWorkspace({
         class: "review-editor-content",
       },
       handleDOMEvents: {
-        mouseup: (view, event) => {
-          handleMouseUp(event);
+        mouseup: () => {
+          handleMouseUp();
           return false;
         },
       },
@@ -143,7 +142,7 @@ export function ReviewWorkspace({
   }, [isPopoverOpen]);
 
   // ---- Handler: blok teks di artikel ----
-  const handleMouseUp = (event: MouseEvent) => {
+  const handleMouseUp = () => {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
       // Sembunyikan toolbar jika tidak ada selection

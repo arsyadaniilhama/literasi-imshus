@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArticleCard } from "@/components/article/ArticleCard";
@@ -10,7 +9,7 @@ import { IslamicPattern } from "@/components/ui/islamic-pattern";
 import { Search, ArrowRight, BookOpen, Users, Sparkles } from "lucide-react";
 import { SITE_URL, SCHOOL_NAME, SCHOOL_SHORT } from "@/lib/constants";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const SITE_DESCRIPTION =
   "Platform publikasi tulisan santri IMSHUS Isy Karima dengan sistem review guru. Baca cerita, opini, dan puisi terbaik dari para santri.";

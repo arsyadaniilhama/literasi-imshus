@@ -250,7 +250,7 @@ export async function approveArticle(formData: FormData): Promise<ActionResult> 
     if (!article) return { success: false, error: "Artikel tidak ditemukan." };
 
     // Generate slug unik
-    let baseSlug = slugify(article.title) || `artikel-${article.id.slice(0, 6)}`;
+    const baseSlug = slugify(article.title) || `artikel-${article.id.slice(0, 6)}`;
     let slug = baseSlug;
     let counter = 1;
     while (await prisma.article.findUnique({ where: { slug } })) {

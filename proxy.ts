@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // Protected route patterns
-const STUDENT_PATHS = ["/dashboard/student"];
-const TEACHER_PATHS = ["/dashboard/teacher"];
-const ADMIN_PATHS = ["/dashboard/admin"];
 const AUTH_PATHS = ["/login", "/register"];
-const PUBLIC_PATHS = ["/", "/articles", "/categories"];
 
 export default async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;

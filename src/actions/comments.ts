@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireStudent, requireTeacher } from "@/lib/auth/session";
+import { requireStudent } from "@/lib/auth/session";
 import type { ActionResult } from "@/types";
 
 /**

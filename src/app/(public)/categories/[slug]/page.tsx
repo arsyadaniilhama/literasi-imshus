@@ -6,11 +6,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ArrowLeft, BookOpen, Tag } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateStaticParams() {
+  try {
+    const categories = await prisma.category.findMany({
+      select: { slug: true },
+      take: 100,
+    });
+    return categories
+      .filter((c) => Boolean(c.slug))
+      .map((c) => ({ slug: c.slug }));
+  } catch {
+    return [];
+  }
+}
 
 async function getCategory(slug: string) {
   return prisma.category.findUnique({

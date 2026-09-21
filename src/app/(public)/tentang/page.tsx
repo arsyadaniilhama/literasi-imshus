@@ -3,7 +3,7 @@ import { SCHOOL_NAME, SCHOOL_SHORT } from "@/lib/constants";
 import { PenLine, ShieldCheck, Sparkles } from "lucide-react";
 import { IslamicPattern } from "@/components/ui/islamic-pattern";
 
-export const dynamic = "force-dynamic";
+export const revalidate = false;
 
 export const metadata: Metadata = {
   title: "Tentang",

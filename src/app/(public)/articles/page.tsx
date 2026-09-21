@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { Search, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Artikel",

@@ -19,7 +19,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { startReview } from "@/actions/reviews";
 import {
-  FileText,
   Clock,
   Eye,
   AlertTriangle,
@@ -28,7 +27,7 @@ import {
   User,
   BookOpen,
 } from "lucide-react";
-import { formatDate, timeAgo, cn } from "@/lib/utils";
+import { timeAgo, cn } from "@/lib/utils";
 import type { ArticleStatus } from "@/types";
 
 // ============================================================
