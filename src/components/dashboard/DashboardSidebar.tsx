@@ -2,37 +2,58 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { ScrollText, LogOut, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  FileText,
-  PenTool,
-  User,
-  X,
-  LogOut,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/actions/auth";
 
-const navigation = [
-  { name: "Dasbor", href: "/dashboard/student", icon: LayoutDashboard },
-  { name: "Artikel Saya", href: "/dashboard/student/articles", icon: FileText },
-  { name: "Buat Artikel", href: "/dashboard/student/articles/new", icon: PenTool },
-  { name: "Profil", href: "/dashboard/student/profile", icon: User },
-] as const;
-
-interface StudentSidebarProps {
-  userName: string;
+export interface DashboardNavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  /** Opsional: cocokkan juga dengan query-tab (mis. ?tab=submitted) */
+  tab?: string;
 }
 
-export function StudentSidebar({ userName }: StudentSidebarProps) {
+interface DashboardSidebarProps {
+  items: DashboardNavItem[];
+  userName: string;
+  userRole: string;
+}
+
+/**
+ * Shell sidebar bersama untuk semua peran (Admin, Guru, Santri).
+ * Drawer mobile (`fixed` + hamburger) dan persistent di desktop (`lg:static`).
+ * Branding, active state, dan footer user/logout identik untuk setiap peran.
+ */
+export function DashboardSidebar({
+  items,
+  userName,
+  userRole,
+}: DashboardSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = React.useState(false);
+
+  const isItemActive = (item: DashboardNavItem) => {
+    // Nav berbasis tab (beberapa item berbagi pathname, dibedakan via ?tab=)
+    if (item.tab) {
+      return (
+        pathname.startsWith(item.href) &&
+        searchParams.get("tab") === item.tab
+      );
+    }
+    // Item root tanpa tab: aktif hanya bila tidak ada tab lain yang dipilih
+    if (pathname === item.href) {
+      return !searchParams.get("tab");
+    }
+    return pathname.startsWith(item.href + "/");
+  };
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Hamburger — mobile only */}
       <button
         type="button"
         className="fixed left-4 top-4 z-50 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-card text-foreground shadow-md ring-1 ring-border lg:hidden"
@@ -57,7 +78,7 @@ export function StudentSidebar({ userName }: StudentSidebarProps) {
         </svg>
       </button>
 
-      {/* Mobile overlay */}
+      {/* Overlay — mobile only */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -75,18 +96,18 @@ export function StudentSidebar({ userName }: StudentSidebarProps) {
         )}
         aria-label="Navigasi utama"
       >
-        {/* Header */}
+        {/* Branding — identik untuk semua peran */}
         <div className="flex h-16 items-center justify-between border-b border-primary/10 px-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <PenTool className="h-5 w-5 text-primary-foreground" />
+            <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <ScrollText className="size-5" aria-hidden="true" />
             </div>
             <div className="leading-tight">
               <span className="block font-heading text-base font-semibold">
                 Blog Santri
               </span>
-              <span className="block text-xs text-muted-foreground">
-                Panel Santri
+              <span className="block text-xs capitalize text-muted-foreground">
+                {userRole}
               </span>
             </div>
           </div>
@@ -97,7 +118,7 @@ export function StudentSidebar({ userName }: StudentSidebarProps) {
             onClick={() => setIsOpen(false)}
             aria-label="Tutup menu navigasi"
           >
-            <X className="h-5 w-5" />
+            <X className="size-5" />
           </Button>
         </div>
 
@@ -106,18 +127,12 @@ export function StudentSidebar({ userName }: StudentSidebarProps) {
           className="flex-1 space-y-1 overflow-y-auto px-3 py-4"
           aria-label="Menu navigasi"
         >
-          {navigation.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href === "/dashboard/student/articles" &&
-                pathname.startsWith("/dashboard/student/articles/") &&
-                pathname !== "/dashboard/student/articles/new") ||
-              (item.href === "/dashboard/student/articles/new" &&
-                pathname.startsWith("/dashboard/student/articles/new"));
-
+          {items.map((item) => {
+            const isActive = isItemActive(item);
+            const Icon = item.icon;
             return (
               <Link
-                key={item.name}
+                key={item.href + (item.tab ?? "")}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
@@ -128,22 +143,24 @@ export function StudentSidebar({ userName }: StudentSidebarProps) {
                 onClick={() => setIsOpen(false)}
                 aria-current={isActive ? "page" : undefined}
               >
-                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                <span>{item.name}</span>
+                <Icon className="size-5 shrink-0" aria-hidden="true" />
+                <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* Footer user + logout */}
+        {/* User + logout */}
         <div className="space-y-2 border-t border-primary/10 p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
               {userName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{userName}</p>
-              <p className="text-xs text-muted-foreground">Santri</p>
+              <p className="text-xs capitalize text-muted-foreground">
+                {userRole}
+              </p>
             </div>
           </div>
           <form action={logout}>
@@ -153,7 +170,7 @@ export function StudentSidebar({ userName }: StudentSidebarProps) {
               size="sm"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
             >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <LogOut className="size-4" aria-hidden="true" />
               Keluar
             </Button>
           </form>

@@ -28,7 +28,7 @@ import {
   User,
   BookOpen,
 } from "lucide-react";
-import { formatDate, timeAgo } from "@/lib/utils";
+import { formatDate, timeAgo, cn } from "@/lib/utils";
 import type { ArticleStatus } from "@/types";
 
 // ============================================================
@@ -142,8 +142,8 @@ export default async function TeacherDashboardPage({
       label: "Perlu Revisi",
       value: stats.revisionRequired,
       icon: AlertTriangle,
-      color: "text-orange-500",
-      bg: "bg-orange-50 dark:bg-orange-950/30",
+      color: "text-gold",
+      bg: "bg-gold/10",
     },
     {
       label: "Approved Hari Ini",
@@ -166,20 +166,29 @@ export default async function TeacherDashboardPage({
 
       {/* Statistik (hanya di dashboard utama) */}
       {showDashboard && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((card) => (
             <Card
               key={card.label}
-              className={`transition-shadow hover:shadow-md ${card.bg}`}
+              className="transition-shadow hover:shadow-md"
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <card.icon className={`h-4 w-4 ${card.color}`} />
-                  {card.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{card.value}</div>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {card.label}
+                    </p>
+                    <p className="text-3xl font-bold mt-1">{card.value}</p>
+                  </div>
+                  <div
+                    className={cn(
+                      "flex size-12 items-center justify-center rounded-xl",
+                      card.bg
+                    )}
+                  >
+                    <card.icon className={cn("size-6", card.color)} />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))}

@@ -30,7 +30,7 @@ import {
   ArrowRight,
   Save,
 } from "lucide-react";
-import { timeAgo } from "@/lib/utils";
+import { timeAgo, cn } from "@/lib/utils";
 import type { ArticleStatus } from "@/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -108,25 +108,29 @@ export default async function StudentDashboardPage({
       label: "Draft",
       value: stats.draft,
       icon: Save,
-      iconClass: "text-gray-500",
+      color: "text-muted-foreground",
+      bg: "bg-muted",
     },
     {
       label: "Menunggu Review",
       value: stats.submitted,
       icon: Clock,
-      iconClass: "text-blue-500",
+      color: "text-primary",
+      bg: "bg-primary/10",
     },
     {
       label: "Perlu Revisi",
       value: stats.revision_required,
       icon: ArrowRight,
-      iconClass: "text-orange-500",
+      color: "text-gold",
+      bg: "bg-gold/10",
     },
     {
       label: "Published",
       value: stats.published,
       icon: Eye,
-      iconClass: "text-primary",
+      color: "text-primary",
+      bg: "bg-primary/10",
     },
   ];
 
@@ -155,17 +159,26 @@ export default async function StudentDashboardPage({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statusCards.map((card) => (
           <Card key={card.label} className="transition-shadow hover:shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <card.icon className={`h-4 w-4 ${card.iconClass}`} aria-hidden="true" />
-                {card.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{card.value}</div>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {card.label}
+                  </p>
+                  <p className="text-3xl font-bold mt-1">{card.value}</p>
+                </div>
+                <div
+                  className={cn(
+                    "flex size-12 items-center justify-center rounded-xl",
+                    card.bg
+                  )}
+                >
+                  <card.icon className={cn("size-6", card.color)} aria-hidden="true" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
