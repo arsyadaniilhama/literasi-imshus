@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireStudent } from "@/lib/auth/session";
+import { requireStudent, requireUser } from "@/lib/auth/session";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createArticleSchema } from "@/lib/validations";
 import type { ActionResult, ArticleStatus } from "@/types";
 
@@ -271,5 +272,63 @@ export async function deleteArticle(formData: FormData): Promise<ActionResult> {
   } catch (error) {
     console.error("deleteArticle error:", error);
     return { success: false, error: "Terjadi kesalahan saat menghapus artikel." };
+  }
+}
+
+/**
+ * Upload gambar cover artikel ke Supabase Storage (bucket `article-covers`).
+ */
+export async function uploadCoverImage(
+  formData: FormData
+): Promise<ActionResult<{ url: string }>> {
+  await requireUser();
+
+  const file = formData.get("file") as File | null;
+  if (!file || !(file instanceof File)) {
+    return { success: false, error: "File gambar tidak ditemukan." };
+  }
+
+  // Maksimal 5MB
+  if (file.size > 5 * 1024 * 1024) {
+    return { success: false, error: "Ukuran gambar maksimal 5MB." };
+  }
+
+  // Validasi format file
+  const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!validTypes.includes(file.type)) {
+    return {
+      success: false,
+      error: "Format file tidak didukung. Gunakan JPG, PNG, WEBP, atau GIF.",
+    };
+  }
+
+  try {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const filename = `cover-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("article-covers")
+      .upload(filename, buffer, {
+        contentType: file.type,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("uploadCoverImage storage error:", uploadError);
+      return { success: false, error: "Gagal mengunggah gambar ke storage." };
+    }
+
+    const { data: pubUrl } = supabaseAdmin.storage
+      .from("article-covers")
+      .getPublicUrl(filename);
+
+    return {
+      success: true,
+      data: { url: pubUrl.publicUrl },
+    };
+  } catch (error) {
+    console.error("uploadCoverImage error:", error);
+    return { success: false, error: "Terjadi kesalahan saat mengunggah gambar." };
   }
 }

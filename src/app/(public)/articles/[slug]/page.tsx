@@ -96,6 +96,13 @@ export default async function ArticleDetailPage({ params }: Props) {
 
   const content = article.current_revision?.content ?? "";
   const wordCount = countWords(content);
+  const coverUrl = article.cover_image_url?.trim();
+  const hasCover = Boolean(
+    coverUrl &&
+      (coverUrl.startsWith("http://") ||
+        coverUrl.startsWith("https://") ||
+        coverUrl.startsWith("/"))
+  );
 
   const articleUrl = `${SITE_URL}/articles/${article.slug}`;
   const jsonLd = {
@@ -206,10 +213,10 @@ export default async function ArticleDetailPage({ params }: Props) {
       </header>
 
       {/* Cover */}
-      {article.cover_image_url && (
+      {hasCover && coverUrl && (
         <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-xl shadow-lg">
           <Image
-            src={article.cover_image_url}
+            src={coverUrl}
             alt={`Sampul artikel ${article.title}`}
             fill
             priority

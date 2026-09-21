@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { toast } from "sonner";
-import { saveDraft, submitArticle } from "@/actions/articles";
+import { saveDraft, submitArticle, uploadCoverImage } from "@/actions/articles";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,8 @@ import {
   Tag,
   PenTool,
   Eye,
+  Upload,
+  X,
 } from "lucide-react";
 import {
   ARTICLE_STATUS_LABELS,
@@ -105,10 +107,57 @@ export function ArticleEditClient({
   const [title, setTitle] = React.useState(initialTitle);
   const [excerpt, setExcerpt] = React.useState(initialExcerpt);
   const [coverImageUrl, setCoverImageUrl] = React.useState(initialCoverImageUrl);
+  const [isUploadingCover, setIsUploadingCover] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [categoryId, setCategoryId] = React.useState(initialCategoryId);
   const [content, setContent] = React.useState(initialContent);
   const [contentJson, setContentJson] = React.useState(initialContentJson);
   const [activeTab, setActiveTab] = React.useState<"editor" | "preview">("editor");
+
+  const handleCoverFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran foto maksimal 5MB.");
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await uploadCoverImage(fd);
+      if (!res.success || !res.data?.url) {
+        toast.error(res.error || "Gagal mengunggah foto sampul.");
+      } else {
+        setCoverImageUrl(res.data.url);
+        toast.success("Foto sampul berhasil diunggah!");
+      }
+    } catch {
+      toast.error("Terjadi kesalahan saat mengunggah foto.");
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
+  const handleCoverUrlChange = (val: string) => {
+    let cleanVal = val.trim();
+    if (cleanVal.includes("google.com/imgres")) {
+      try {
+        const parsed = new URL(cleanVal);
+        const realUrl = parsed.searchParams.get("imgurl");
+        if (realUrl) {
+          cleanVal = realUrl;
+          toast.info("URL gambar asli dari Google berhasil diekstrak.");
+        }
+      } catch {
+        // Abaikan jika URL tidak valid
+      }
+    }
+    setCoverImageUrl(cleanVal);
+  };
 
   const latestReview = reviews[0];
   const hasRevisionRequired =
@@ -329,25 +378,68 @@ export function ArticleEditClient({
 
           {/* Cover image */}
           <div>
-            <Label htmlFor="cover_image_url" className="mb-1.5 block">
-              URL Gambar Cover
-            </Label>
-            <Input
-              id="cover_image_url"
-              name="cover_image_url"
-              type="url"
-              value={coverImageUrl}
-              onChange={(e) => setCoverImageUrl(e.target.value)}
-              placeholder="https://contoh.com/gambar-cover.jpg"
-              disabled={!isEditable}
+            <div className="flex items-center justify-between mb-1.5">
+              <Label htmlFor="cover_image_url" className="block">
+                Foto Sampul (Cover)
+              </Label>
+              {coverImageUrl && isEditable && (
+                <button
+                  type="button"
+                  onClick={() => setCoverImageUrl("")}
+                  className="text-xs text-destructive hover:underline inline-flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" />
+                  Hapus Cover
+                </button>
+              )}
+            </div>
+
+            {/* Input file upload tersembunyi */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleCoverFileUpload}
+              disabled={!isEditable || isUploadingCover}
             />
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!isEditable || isUploadingCover}
+                className="shrink-0 h-10 gap-1.5"
+              >
+                {isUploadingCover ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                <span>{isUploadingCover ? "Mengunggah..." : "Upload Foto"}</span>
+              </Button>
+
+              <Input
+                id="cover_image_url"
+                name="cover_image_url"
+                type="url"
+                value={coverImageUrl}
+                onChange={(e) => handleCoverUrlChange(e.target.value)}
+                placeholder="Atau tempel URL gambar (https://...)"
+                disabled={!isEditable || isUploadingCover}
+                className="h-10 text-sm"
+              />
+            </div>
+
             {coverImageUrl && (
-              <div className="mt-2 overflow-hidden rounded-lg border border-border">
+              <div className="mt-3 relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-border bg-muted/30">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={coverImageUrl}
                   alt="Pratinjau cover"
-                  className="h-40 w-full object-cover"
+                  className="h-full w-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
                   }}
