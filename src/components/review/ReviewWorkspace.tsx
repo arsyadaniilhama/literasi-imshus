@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverAnchor,
 } from "@/components/ui/popover";
 import {
   Select,
@@ -92,6 +92,8 @@ export function ReviewWorkspace({
   const [draft, setDraft] = React.useState<CommentDraft | null>(null);
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
   const [toolbarPos, setToolbarPos] = React.useState<{ top: number; left: number } | null>(null);
+  const [anchorPos, setAnchorPos] = React.useState<{ top: number; left: number } | null>(null);
+  const closeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [commentText, setCommentText] = React.useState("");
   const [commentType, setCommentType] = React.useState<ReviewCommentType>("LANGUAGE");
   const [saving, setSaving] = React.useState(false);
@@ -100,6 +102,26 @@ export function ReviewWorkspace({
   const [activeCommentId, setActiveCommentId] = React.useState<string | null>(null);
   const [showGeneralComment, setShowGeneralComment] = React.useState(false);
   const [generalText, setGeneralText] = React.useState(generalComment ?? "");
+
+  const closeCommentForm = React.useCallback(() => {
+    setIsPopoverOpen(false);
+    setCommentText("");
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    // Pertahankan anchorPos & draft sebentar agar animasi keluar (exit animation)
+    // Radix Popover tetap berada di posisi seleksi teks dan tidak loncat ke (0, 0).
+    closeTimeoutRef.current = setTimeout(() => {
+      setDraft(null);
+      setToolbarPos(null);
+      setAnchorPos(null);
+      closeTimeoutRef.current = null;
+    }, 200);
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
 
   // ---- Editor Tiptap (read-only) ----
   const editor = useEditor({
@@ -135,20 +157,44 @@ export function ReviewWorkspace({
       if (!isPopoverOpen) {
         setDraft(null);
         setToolbarPos(null);
+        setAnchorPos(null);
       }
     };
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, [isPopoverOpen]);
 
+  // Sembunyikan floating toolbar jika klik di luar seleksi saat popover tidak terbuka
+  React.useEffect(() => {
+    if (!toolbarPos || isPopoverOpen) return;
+
+    const handleGlobalPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("[data-review-toolbar]")) return;
+
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+          setDraft(null);
+          setToolbarPos(null);
+          setAnchorPos(null);
+        }
+      }, 50);
+    };
+
+    document.addEventListener("pointerdown", handleGlobalPointerDown);
+    return () => document.removeEventListener("pointerdown", handleGlobalPointerDown);
+  }, [toolbarPos, isPopoverOpen]);
+
   // ---- Handler: blok teks di artikel ----
   const handleMouseUp = () => {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
-      // Sembunyikan toolbar jika tidak ada selection
-      if (toolbarPos) {
+      // Sembunyikan toolbar jika tidak ada selection dan popover tidak terbuka
+      if (toolbarPos && !isPopoverOpen) {
         setDraft(null);
         setToolbarPos(null);
+        setAnchorPos(null);
       }
       return;
     }
@@ -183,12 +229,16 @@ export function ReviewWorkspace({
       return;
     }
 
-    // Posisi toolbar di dekat akhir selection
+    // Posisi toolbar di dekat akhir selection, dipastikan aman di dalam batas layar
     const rect = sel.getRangeAt(0).getBoundingClientRect();
-    setToolbarPos({
-      top: rect.top - 12,
-      left: rect.right - 40,
-    });
+    if (rect.width === 0 && rect.height === 0) return;
+
+    const top = Math.max(16, rect.top - 12);
+    const left = Math.max(16, Math.min(window.innerWidth - 160, rect.right - 40));
+
+    const pos = { top, left };
+    setToolbarPos(pos);
+    setAnchorPos(pos);
 
     setDraft({
       selectedText: text.slice(0, 500),
@@ -203,8 +253,14 @@ export function ReviewWorkspace({
 
   // ---- Buka popover dari toolbar ----
   const handleOpenCommentForm = () => {
-    if (!draft) return;
+    if (!draft || !toolbarPos) return;
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setAnchorPos(toolbarPos);
     setIsPopoverOpen(true);
+    setToolbarPos(null);
   };
 
   // Terapkan highlight pada editor
@@ -275,10 +331,7 @@ export function ReviewWorkspace({
       setComments((prev) => [...prev, newComment]);
 
       toast.success("Catatan berhasil ditambahkan.");
-      setIsPopoverOpen(false);
-      setDraft(null);
-      setToolbarPos(null);
-      setCommentText("");
+      closeCommentForm();
     } catch {
       toast.error("Terjadi kesalahan saat menyimpan komentar.");
     } finally {
@@ -644,35 +697,45 @@ export function ReviewWorkspace({
         </div>
       </div>
 
-      {/* Popover komentar — trigger = floating toolbar */}
+      {/* Floating Toolbar "Beri Catatan" */}
+      {draft && toolbarPos && !isPopoverOpen && (
+        <Button
+          type="button"
+          size="sm"
+          data-review-toolbar
+          className="fixed z-50 shadow-lg animate-in fade-in-0 zoom-in-95 duration-150"
+          style={{ top: toolbarPos.top, left: toolbarPos.left }}
+          onClick={handleOpenCommentForm}
+        >
+          <PenLine className="h-4 w-4 mr-1.5" />
+          Beri Catatan
+        </Button>
+      )}
+
+      {/* Popover komentar */}
       <Popover
         open={isPopoverOpen}
         onOpenChange={(open) => {
-          setIsPopoverOpen(open);
-          // Bersihkan draft/toolbar saat popover ditutup (klik luar, submit, atau batal).
-          // Catatan: jangan pakai mousedown manual di luar — Radix Select di-render
-          // via portal, jadi klik pada opsi dropdown tidak berada dalam elemen popover.
           if (!open) {
-            setDraft(null);
-            setToolbarPos(null);
-            setCommentText("");
+            closeCommentForm();
+          } else {
+            setIsPopoverOpen(true);
           }
         }}
       >
-        {draft && toolbarPos && (
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              size="sm"
-              data-review-toolbar
-              className="fixed z-50 shadow-lg"
-              style={{ top: toolbarPos.top, left: toolbarPos.left }}
-              onClick={handleOpenCommentForm}
-            >
-              <PenLine className="h-4 w-4 mr-1.5" />
-              Beri Catatan
-            </Button>
-          </PopoverTrigger>
+        {anchorPos && (
+          <PopoverAnchor asChild>
+            <span
+              style={{
+                position: "fixed",
+                top: anchorPos.top,
+                left: anchorPos.left,
+                width: 1,
+                height: 1,
+                pointerEvents: "none",
+              }}
+            />
+          </PopoverAnchor>
         )}
         <PopoverContent
           data-review-popover
@@ -735,11 +798,7 @@ export function ReviewWorkspace({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  setIsPopoverOpen(false);
-                  setDraft(null);
-                  setToolbarPos(null);
-                }}
+                onClick={closeCommentForm}
               >
                 Batal
               </Button>

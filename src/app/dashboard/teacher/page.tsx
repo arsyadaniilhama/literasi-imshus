@@ -129,6 +129,7 @@ export default async function TeacherDashboardPage({
       icon: Clock,
       color: "text-primary",
       bg: "bg-primary/10",
+      href: "/dashboard/teacher?tab=submitted",
     },
     {
       label: "Sedang Direview",
@@ -136,6 +137,7 @@ export default async function TeacherDashboardPage({
       icon: Eye,
       color: "text-gold",
       bg: "bg-gold/10",
+      href: "/dashboard/teacher?tab=reviewing",
     },
     {
       label: "Perlu Revisi",
@@ -143,6 +145,7 @@ export default async function TeacherDashboardPage({
       icon: AlertTriangle,
       color: "text-gold",
       bg: "bg-gold/10",
+      href: "/dashboard/teacher?tab=history",
     },
     {
       label: "Approved Hari Ini",
@@ -150,6 +153,7 @@ export default async function TeacherDashboardPage({
       icon: CheckCircle,
       color: "text-primary",
       bg: "bg-primary/10",
+      href: "/dashboard/teacher?tab=history",
     },
   ];
 
@@ -167,29 +171,28 @@ export default async function TeacherDashboardPage({
       {showDashboard && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((card) => (
-            <Card
-              key={card.label}
-              className="transition-shadow hover:shadow-md"
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {card.label}
-                    </p>
-                    <p className="text-3xl font-bold mt-1">{card.value}</p>
+            <Link key={card.label} href={card.href} className="block group">
+              <Card className="transition-all hover:-translate-y-0.5 hover:shadow-md">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {card.label}
+                      </p>
+                      <p className="text-3xl font-bold mt-1">{card.value}</p>
+                    </div>
+                    <div
+                      className={cn(
+                        "flex size-12 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
+                        card.bg
+                      )}
+                    >
+                      <card.icon className={cn("size-6", card.color)} />
+                    </div>
                   </div>
-                  <div
-                    className={cn(
-                      "flex size-12 items-center justify-center rounded-xl",
-                      card.bg
-                    )}
-                  >
-                    <card.icon className={cn("size-6", card.color)} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
