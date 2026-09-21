@@ -93,6 +93,19 @@ export const createCategorySchema = z.object({
 
 export const updateCategorySchema = createCategorySchema.partial();
 
+export const updateUserEmailSchema = z.object({
+  user_id: z.string().min(1, "User tidak ditemukan"),
+  email: z.string().email("Email tidak valid"),
+});
+
+export const resetUserPasswordSchema = z.object({
+  user_id: z.string().min(1, "User tidak ditemukan"),
+  password: z
+    .string()
+    .min(6, "Password minimal 6 karakter")
+    .max(100, "Password maksimal 100 karakter"),
+});
+
 export const createUserSchema = z.object({
   name: z
     .string()

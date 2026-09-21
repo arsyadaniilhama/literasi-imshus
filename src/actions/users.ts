@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
-import { createUserSchema } from "@/lib/validations";
+import { createUserSchema, updateUserEmailSchema, resetUserPasswordSchema } from "@/lib/validations";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { ActionResult } from "@/types";
 import type { Role } from "@/types";
@@ -144,6 +144,123 @@ export async function deleteUser(formData: FormData): Promise<ActionResult> {
   } catch (error) {
     console.error("deleteUser error:", error);
     return { success: false, error: "Terjadi kesalahan saat menghapus user." };
+  }
+}
+
+/**
+ * Admin: edit email user — sinkron ke Supabase Auth + Prisma.
+ * Admin bypasses current password (pakai service-role admin client).
+ */
+export async function updateUserEmail(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = updateUserEmailSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      success: false,
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const { user_id, email } = parsed.data;
+  const normalizedEmail = email.toLowerCase().trim();
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: user_id } });
+    if (!user) return { success: false, error: "User tidak ditemukan." };
+
+    // No-op: email tidak berubah
+    if (user.email.toLowerCase() === normalizedEmail) {
+      return { success: true };
+    }
+
+    // Pre-check duplikat di Prisma (friendly error)
+    const duplicate = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+    if (duplicate) return { success: false, error: "Email sudah terdaftar." };
+
+    // Update Supabase Auth (admin client bypasses current-password).
+    // email_confirm: true — akun tetap aktif (sama seperti createUser).
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+      user_id,
+      { email: normalizedEmail, email_confirm: true }
+    );
+    if (authError) {
+      console.error("updateUserEmail supabase error:", authError.message);
+      return { success: false, error: "Gagal mengubah email: " + authError.message };
+    }
+
+    // Sinkron Prisma
+    await prisma.user.update({
+      where: { id: user_id },
+      data: { email: normalizedEmail },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        user_id: admin.id,
+        action: "ADMIN_UPDATED_USER_EMAIL",
+        entity_type: "user",
+        entity_id: user_id,
+      },
+    });
+
+    revalidatePath("/dashboard/admin/users");
+    return { success: true };
+  } catch (error) {
+    console.error("updateUserEmail error:", error);
+    return { success: false, error: "Terjadi kesalahan saat mengubah email." };
+  }
+}
+
+/**
+ * Admin: reset password user — hanya di Supabase Auth (tidak ada Prisma).
+ * Admin tidak perlu tahu current-password.
+ */
+export async function resetUserPassword(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = resetUserPasswordSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      success: false,
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const { user_id, password } = parsed.data;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: user_id } });
+    if (!user) return { success: false, error: "User tidak ditemukan." };
+
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+      user_id,
+      { password }
+    );
+    if (authError) {
+      console.error("resetUserPassword supabase error:", authError.message);
+      return {
+        success: false,
+        error: "Gagal mengatur ulang password: " + authError.message,
+      };
+    }
+
+    // Password hanya di Supabase Auth — tidak perlu update Prisma
+
+    await prisma.auditLog.create({
+      data: {
+        user_id: admin.id,
+        action: "ADMIN_RESET_PASSWORD",
+        entity_type: "user",
+        entity_id: user_id,
+      },
+    });
+
+    revalidatePath("/dashboard/admin/users");
+    return { success: true };
+  } catch (error) {
+    console.error("resetUserPassword error:", error);
+    return { success: false, error: "Terjadi kesalahan saat mengatur ulang password." };
   }
 }
 

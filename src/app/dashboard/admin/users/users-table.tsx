@@ -39,10 +39,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { createUser, updateUserRole, deleteUser } from "@/actions/users";
+import { createUser, updateUserRole, deleteUser, updateUserEmail, resetUserPassword } from "@/actions/users";
 import type { ActionResult } from "@/types";
 import { ROLE_LABELS, type Role } from "@/lib/constants";
-import { PlusIcon, Loader2, Trash2 } from "lucide-react";
+import { PlusIcon, Loader2, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 interface User {
@@ -61,6 +61,7 @@ interface UsersTableProps {
 export function UsersTable({ users: initialUsers }: UsersTableProps) {
   const [users, setUsers] = useState(initialUsers);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<User | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -154,6 +155,61 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
       toast.error(result.error ?? "Gagal menghapus user");
     }
     setDeleteDialogOpen(null);
+    setIsSubmitting(false);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editTarget) return;
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const newEmail = String(formData.get("email") || "").trim();
+    const newPassword = String(formData.get("password") || "");
+    const isEmailChanged =
+      newEmail.toLowerCase() !== editTarget.email.toLowerCase();
+
+    // Email update (no-op jika tidak berubah)
+    if (isEmailChanged) {
+      const emailData = new FormData();
+      emailData.append("user_id", editTarget.id);
+      emailData.append("email", newEmail);
+      const emailResult: ActionResult = await updateUserEmail(emailData);
+      if (!emailResult.success) {
+        toast.error(emailResult.error ?? "Gagal mengubah email");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // Password hanya jika diisi
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        toast.error("Password minimal 6 karakter");
+        setIsSubmitting(false);
+        return;
+      }
+      const pwData = new FormData();
+      pwData.append("user_id", editTarget.id);
+      pwData.append("password", newPassword);
+      const pwResult: ActionResult = await resetUserPassword(pwData);
+      if (!pwResult.success) {
+        toast.error(pwResult.error ?? "Gagal mengatur ulang password");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    toast.success("User berhasil diperbarui");
+    setEditTarget(null);
+    // Update state lokal (pola sama dengan role change — tanpa reload penuh)
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === editTarget.id
+          ? { ...u, email: isEmailChanged ? newEmail : u.email }
+          : u
+      )
+    );
     setIsSubmitting(false);
   };
 
@@ -258,7 +314,7 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
               <TableHead>User</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead className="w-[160px] text-right">Aksi</TableHead>
+              <TableHead className="w-auto md:w-[160px] text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -309,6 +365,19 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {/* Edit email / password */}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-muted-foreground hover:text-foreground"
+                        disabled={isSubmitting}
+                        onClick={() => setEditTarget(user)}
+                        title="Edit email / password"
+                      >
+                        <Pencil className="size-4" />
+                        <span className="sr-only">Edit</span>
+                      </Button>
+
                       {/* Role dropdown */}
                       <Select
                         value={user.role}
@@ -317,7 +386,7 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
                         }
                         disabled={isSubmitting}
                       >
-                        <SelectTrigger className="w-[110px]">
+                        <SelectTrigger className="w-[90px] sm:w-[110px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -376,6 +445,62 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Edit email / password dialog */}
+      <Dialog open={editTarget !== null} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit {editTarget?.name}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                name="email"
+                type="email"
+                defaultValue={editTarget?.email}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-password">Password Baru (opsional)</Label>
+              <Input
+                id="edit-password"
+                name="password"
+                type="password"
+                placeholder="Kosongkan jika tidak ingin mengubah"
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full sm:w-auto"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  "Simpan"
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditTarget(null)}
+                className="w-full sm:w-auto"
+              >
+                Batal
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
